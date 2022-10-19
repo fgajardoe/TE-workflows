@@ -1,0 +1,27 @@
+R_CONTAINER_CMD="docker run -v `pwd`:/home/user fgajardoe/r-custom:latest  "
+
+def get_input(wildcards):
+    return config["species"][wildcards.specie]
+
+rule all:
+	input:
+		expand("{specie}.rmgr.RData",specie=config["species"])
+
+
+rule generateRMGR:
+	input:
+		"{specie}.bed",
+		config["eqFile"]
+	output:
+		"{specie}.rmgr.RData"
+	shell:
+		R_CONTAINER_CMD+" Rscript generateRMGR.R {input} {wildcards.specie}"
+
+rule getBEDfromRepeatMaskerCat:
+	input:
+		get_input
+	output:
+		"{specie}.bed"
+	shell:
+		"perl RepeatMaskerAln2KimuraBed.pl -g -i {input} > {output}"
+

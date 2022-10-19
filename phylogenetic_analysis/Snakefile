@@ -1,0 +1,748 @@
+configfile: "config.common.yaml"
+
+
+CONTAINER_CMD="docker run -v `pwd`:/home/user fgajardoe/phylogenomic-analysis-container "
+CONTAINER_R_CMD="docker run -v /:/home/user -v /storage2/tmp:/tmp -w /home/user/storage2/dump/Austrolebias/RTEBOVB_TREE_FOR_SUMMARY fgajardoe/r-custom:latest "
+#CONTAINER_R_CMD="docker run -v `pwd`:/home/user fgajardoe/r-custom:latest "
+#CONTAINER_CMD="singularity exec -B `pwd`:/home/user phylogenomic-analysis-container_latest.sif "
+#RAXML_EXEC_PATH="/home/pmorales/fastaToTree/standard-RAxML-8.2.12/raxmlHPC-PTHREADS-SSE3"
+
+RAXML_EXEC_PATH="/storage/dump/Orestias/expandedPhylogenyOct2021/fastaToTree/standard-RAxML/raxmlHPC-PTHREADS"
+
+CLUSTALO_EXEC_PATH="/opt/clustalo"
+
+#CDHIT_EXEC_PATH="/opt/cdhit/cd-hit-est" # for tandemFinder
+CDHIT_EXEC_PATH="/opt/cdhit/cd-hit-v4.8.1-2019-0228/cd-hit" # for tandemFinder and clustering of representative seqs
+ORFfinderExecPath="/opt/ORFfinder"
+
+rule all:
+	input:
+		"RAxML_bestTree."+config["prefix"]+".RAxML"
+
+rule clean:
+	output:
+		config["prefix"]+".clean"
+	shell: "rm RTEBovB.blast.m6+qlen+slen+qcovs+scovs RTEBovB.selected-by-length-and-kimura.fasta RTEBovB.selected.fasta RTEBovB.out"
+
+
+# reports
+rule calcTEfragmentLengthDistribution:
+	input:
+		config["rmgr"],
+		config["consensusFamiliesFasta"],
+		config["prefix"]+".selected.centroids.fasta",
+	params:
+		config["TEfams"],
+		config["prefix"]
+	output:
+		config["prefix"]+".TEfragmentLengthDistribution.pdf"
+	shell:
+		CONTAINER_R_CMD+" Rscript calcTEfragmentLengthDistribution.R {input} {params}"
+		
+		
+		
+
+
+rule runTandemFinder:
+	input:
+		config["rmgr"],
+		config["genomeAnnotation"],
+		config["genomeAssembly"]
+	params:
+		config["TEfams"],
+		config["genomeTileWidth"],
+		config["genomeTileWidthMinLength"],
+		config["minNumFragmentsOnTileToPlot"],
+		config["minIdentityToConsiderTandem"],
+		CDHIT_EXEC_PATH,
+		config["prefix"]
+
+	output:
+		config["prefix"]+".tandemFinder.RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript tandemFinder.R {input} {params}"
+
+
+#rule calcMinLengthForFilteringSequences:
+#	input:
+#		config["prefix"]+".TEfamConsensus.fasta"
+#	output:
+#		config["prefix"]+".TEfamConsensus.minLength"
+#	params:
+#		config["propLength"]
+#	shell:
+#		"less {input} |grep -v \">\" |awk '{{print length($0)*{params}}}' > {output}"
+
+
+rule getFilteredInsertionsBED:
+	input:
+		rm=config["rmgr"],
+		#ml=config["prefix"]+".TEfamConsensus.minLength"
+	params:
+		t=config["TEsuperfam"],
+		k=config["kimuraCutoff"],
+		l=config["minLength"],
+		p=config["prefix"],
+	output:
+		config["prefix"]+".filtered-by-length-and-kimura.bed"
+	shell:
+		CONTAINER_R_CMD+"Rscript getFilteredBED.R {input.rm} \"{params.t}\" {params.k} {params.l} {params.p}"
+
+
+rule getSequencesForBED:
+	input:
+		seq=config["genomeAssembly"],
+		bed=config["prefix"]+".filtered-by-length-and-kimura.bed"
+	output:
+		config["prefix"]+".filtered-by-length-and-kimura.fasta"
+	shell:
+		"bedtools getfasta -nameOnly -fi {input.seq} -bed {input.bed} -fo {output}"
+
+
+rule getTEfamsInSuperfam:
+	input:
+		config["rmgr"],
+	output:
+		config["prefix"]+".TEfamsInSuperfam.lst"
+	params:
+		config["TEsuperfam"],
+		config["prefix"]
+	shell:
+		CONTAINER_R_CMD+" Rscript getFamiliesInSuperfam.R {input} {params}"
+
+rule getConsensusFastaForTEfam:
+	input:
+		lst=config["prefix"]+".TEfamsInSuperfam.lst",
+		fa=config["consensusFamiliesFasta"]
+	output:
+		config["prefix"]+".TEfamConsensus.fasta"
+	shell:
+		"cat {input.lst} | seqtk subseq {input.fa} - > {output}"
+
+rule blastAgainstConsensus:
+	input:
+		q=config["prefix"]+".filtered-by-length-and-kimura.fasta",
+		db=config["prefix"]+".TEfamConsensus.fasta",
+		#db=config["consensusFamily"],
+	output:
+		config["prefix"]+".blast"	
+	shell:
+		"makeblastdb -in {input.db} -dbtype nucl && blastn -query {input.q} -db {input.db} -outfmt '6 std qlen slen' -max_target_seqs 1 | awk '{{qc=$4*100/$13; tc=$4*100/$14; print $0\"\t\"qc\"\t\"tc}}' > {output}"
+
+
+rule filterHits:
+	input:
+		config["prefix"]+".blast"	
+	params:
+		scovs=config["consensusFamilyCov"]
+	output:
+		config["prefix"]+".filtered-by-consensus-cov.blast"
+	shell:
+		"less {input} |awk '{{if($16>{params.scovs}){{print $0}}}}' |sort -gr -k 13,13  > {output}"
+
+rule getTopHits:
+	input:
+		config["prefix"]+".filtered-by-consensus-cov.blast"
+	output:
+		config["prefix"]+".filtered-by-consensus-cov.lst"
+	params:
+		config["maxNumberOfSelectedFragments"]
+	shell:
+		"less {input} | cut -f1 | awk 'BEGIN{{i=0}}{{if(i< {params} ){{print $0 }} i=i+1}}' > {output}"
+
+
+rule getSelectedSequences:
+	input:
+		seq=config["prefix"]+".filtered-by-length-and-kimura.fasta",
+		lst=config["prefix"]+".filtered-by-consensus-cov.lst",
+	output:
+		config["prefix"]+".selected.fasta"
+	shell:
+		"seqtk subseq {input.seq} {input.lst} > {output}"
+
+# comentado x no uso
+#rule predictORFsSelectedSequences:
+#	input:
+#		config["prefix"]+".selected.fasta"
+#		
+#	output:
+#		config["prefix"]+".selected.ORFs.fasta"
+#	
+#	shell:
+#		ORFfinderExecPath+" -outfmt 0 -in {input} -out {output}"
+
+
+#rule ORFsClustering:
+#	input:
+#		config["prefix"]+".selected.ORFs.fasta"
+#	output:
+#		config["prefix"]+".selected.ORFs.centroids.fasta"
+#	params:
+#		config["minIdentityToGroupORFSequences"]
+#	shell:
+#		CDHIT_EXEC_PATH+" -i {input} -o {output} -c {params}"
+
+
+
+
+#rule runMSA_mafft:
+#	input:
+#		config["prefix"]+".selected.fasta",
+#	params:
+#		"--maxiterate 1000 --localpair --nuc"
+#	output:
+#		config["prefix"]+".out",
+#	shell:
+#		CONTAINER_CMD+" /opt/mafft-linux64/mafft.bat {params} {input} > {output}"
+
+#rule runMSA_clustalo:
+#	input:
+#		config["prefix"]+".selected.fasta",
+#	output:
+#		out=config["prefix"]+".out",
+#		#cls=config["prefix"]+".out.clusters",
+#		#pos=config["prefix"]+".out.posterior"
+#	threads: config["NCPU"]
+#	shell:
+#		CLUSTALO_EXEC_PATH+" -i {input} -o {output.out} --threads {threads} --use-kimura"  #--posterior-out={output.pos} --clustering-out={output.cls}"
+
+
+#rule drawAlignment:
+#	input:
+#		aln=config["prefix"]+".out",
+#		tr="RAxML_bestTree."+config["prefix"]+".RAxML",
+#	output:
+#		png=config["prefix"]+".out.png",
+#		svg=config["prefix"]+".out.svg",
+#	shell:
+#		"java -jar /opt/jalview-all-2.11.1.3-j1.8.jar -nodisplay -open {input.aln} -png {output.png} -svg {output.svg} -colour nucleotide -tree {input.tr} -sortbytree "
+
+rule obtainRepresentativeSequences:
+	input:
+		config["prefix"]+".selected.fasta",
+	output:
+		s=config["prefix"]+".selected.centroids.fasta",
+		c=config["prefix"]+".selected.centroids.fasta.clstr",
+	params:
+		config["minIdentityToGroupSequences"]
+	threads:
+		config["NCPU"]
+	shell:
+		CDHIT_EXEC_PATH+" -i {input} -d 0 -o {output.s} -c {params} -T {threads}"
+
+rule obtainClusterCentroidTEfamEquivalence:
+	input:
+		config["prefix"]+".selected.centroids.fasta.clstr",
+	output:
+		config["prefix"]+".selected.centroids.fasta.clstr.tab",
+	
+	shell: "less {input} |awk '{{if(/^>/){{ c=$0 }}else{{a=substr($3,2); split(a,b,\".\"); idfam=b[1]; allFams[idfam]=c; if($4==\"*\"){{centroid[c]=idfam}} }} }}END{{for(id in allFams){{print id\"\t\"allFams[id]\"\t\"centroid[allFams[id]];  }}}}' |sort -t'\t' -k2,2 |perl -pe's/>//g; s/ /_/g' > {output}"
+
+rule obtainORFsNuclSeq:
+	input:
+		fa=config["prefix"]+".selected.centroids.fasta",
+		bed=config["prefix"]+".selected.centroids.ORFs.bed"
+	output:
+		config["prefix"]+".selected.centroids.CDSs.fasta",
+	shell:
+		"bedtools getfasta -fi {input.fa} -bed {input.bed} -s -name |perl -pe's/::/_/g' |cut -d':' -f1 > {output}"
+
+# replaced by the rule above
+#rule predictCDSs:
+#	input:
+#		config["prefix"]+".selected.centroids.fasta"
+#		
+#	output:
+#		f=config["prefix"]+".selected.centroids.CDSs.fasta",
+#		c=config["prefix"]+".selected.centroids.CDSs.coords"
+#	shell:
+#		ORFfinderExecPath+" -outfmt 1 -in {input} -out {output.f}.tmp && cat {output.f}.tmp | perl -ne 'if(/^>/){{$_=~s/lcl\|//g; @f=split(/\s/,$_); @f2=split(/:/,$f[0]); print $f2[0].\"\n\"; }}else{{ print $_; }}' > {output.f} && cat {output.f}.tmp | perl -ne 'if(/^>/){{$_=~s/lcl\|//g; @f=split(/\s/,$_); @f2=split(/:/,$f[0]); @f3=split(/-/,$f2[1]); print $f2[0].\"\t\".$f3[0].\"\t\".$f3[1].\"\n\"; }}' |cut -c2-| perl -pe\'s/\tc/\t/g\' > {output.c}" # && rm {output.f}.tmp"
+
+#rule link_ORF_and_CDS_sequences:
+#	input:
+#		aa=config["prefix"]+".selected.centroids.ORFs.fasta",
+#		nt=config["prefix"]+".selected.centroids.CDSs.fasta",
+#	output:
+#		config["prefix"]+".selected.centroids.CDS_ORF_eqSeq.tab"
+#	shell:
+#		"grep \">\" {input.aa} |cut -c2- |seqtk subseq -t {input.aa} - > {output}.1 && \
+#		 less {input.nt} | perl -ne'if(/^>/){{ s/\\n/\\t/g; print \"\n\".$_ }}else{{s/\\n//g; print $_}}' |cut -c2- | tail -n +2 > {output}.2 && \
+#		 paste {output}.1 {output}.2 | cut -f1,3,5 > {output}"
+
+rule predictORFs:
+	input:
+		config["prefix"]+".selected.centroids.fasta"
+		
+	output:
+		f=config["prefix"]+".selected.centroids.ORFs.fasta",
+		c=config["prefix"]+".selected.centroids.ORFs.coords"
+	shell:
+		ORFfinderExecPath+" -outfmt 0 -in {input} -out {output.f}.tmp && cat {output.f}.tmp | perl -ne 'if(/^>/){{$_=~s/lcl\|//g; @f=split(/\s/,$_); @f2=split(/:/,$f[0]); print $f2[0].\"\n\"; }}else{{ print $_; }}' > {output.f} && cat {output.f}.tmp | perl -ne 'if(/^>/){{$_=~s/lcl\|//g; @f=split(/\s/,$_); @f2=split(/:/,$f[0]); print $f2[0].\"\t\".$f2[1].\"\t\".$f2[2].\"\n\"; }}' |cut -c2- > {output.c}" # && rm {output.f}.tmp"
+
+
+
+rule filterORFs:
+	input:
+		faa=config["prefix"]+".selected.centroids.ORFs.fasta",
+		bls=config["prefix"]+".selected.centroids.ORFs.blast",
+		coords=config["prefix"]+".selected.centroids.ORFs.coords"
+	output:
+		f=config["prefix"]+".selected.centroids.selected.ORFs.fasta",
+		c=config["prefix"]+".selected.centroids.selected.ORFs.coords",
+	params:
+		config["minCovORFvsKnownProtein"]
+	shell:
+		"less {input.bls} | awk '{{if($16>{params}){{print}}}}' |cut -f1 |sort -u |seqtk subseq {input.faa} - > {output.f} && less {input.bls} | awk '{{if($16>{params}){{print}}}}' |cut -f1 |sort -u | grep -Fwf - {input.coords} > {output.c} || exit 0 "	
+
+
+rule getFastaWithRTProteins:
+	input:
+		seq=config["prefix"]+".selected.centroids.selected.ORFs.fasta",
+		hmm=config["prefix"]+".selected.centroids.ORFs.hmmsearch.tab",
+	output:
+		config["prefix"]+".selected.centroids.RT-proteins.faa"
+	shell:
+		"less {input.hmm} |grep -vPe \"#\"| awk '{{print $1}}' |seqtk subseq {input.seq} - > {output}"
+
+rule getFastaWithRTCDSs:
+	input:
+		seq=config["prefix"]+".selected.centroids.CDSs.fasta",
+		hmm=config["prefix"]+".selected.centroids.ORFs.hmmsearch.tab",
+	output:
+		config["prefix"]+".selected.centroids.RT-proteins.fna"
+	shell:
+		"less {input.hmm} |grep -vPe \"#\"| awk '{{print $1}}' |seqtk subseq {input.seq} - > {output}"
+
+rule generateBEDfromORFcoords:
+	input:
+		config["prefix"]+".selected.centroids.selected.ORFs.coords"
+	output:
+		config["prefix"]+".selected.centroids.ORFs.bed"
+	shell:
+		"less {input} |awk '{{split($1,a,\"_\"); seqid=a[2]\"_\"a[3]\"_\"a[4]; if($2<=$3){{strand=\"+\"; st=$2; e=$3}}else{{strand=\"-\"; st=$3;e=$2}} print seqid\"\t\"st\"\t\"e\"\t\"a[1]\"\t\"strand\"\t.\t\"$1}}' > {output}"
+
+
+rule blastORFs:
+	input:
+		config["prefix"]+".selected.centroids.ORFs.fasta"
+	output:
+		config["prefix"]+".selected.centroids.ORFs.blast"
+	params:
+		config["blastDbForCheckingORFs"]
+	threads: config["NCPU"]
+	shell:
+		"blastp -query {input} -db {params} -outfmt '6 std qlen slen' -num_threads {threads} | awk '{{qc=$4*100/$13; tc=$4*100/$14; print $0\"\t\"qc\"\t\"tc}}' > {output}"
+		
+
+rule searchRTdomain:
+	input:
+		seq=config["prefix"]+".selected.centroids.selected.ORFs.fasta",
+		hmm=config["hmmModel"]
+	output:
+		tab=config["prefix"]+".selected.centroids.ORFs.hmmsearch.tab",
+		l=config["prefix"]+".selected.centroids.ORFs.hmmsearch.log",
+	threads: config["NCPU"]
+	shell:
+		"hmmsearch --cpu {threads} --tblout {output.tab} {input.hmm} {input.seq} > {output.l}"
+
+rule extractHitCoordsFromHmmerLog:
+	input:
+		config["prefix"]+".selected.centroids.ORFs.hmmsearch.log",
+	output:
+		config["prefix"]+".selected.centroids.ORFs.hmmsearch.coords",
+	shell:
+		"less {input} |grep -A +3 \">>\" |grep -vPe \"--| # \" |awk '{{if(/>/){{printf $0}}else{{print $0}}}}' |awk '{{print $2\"\t\"$3\"\t\"$5\"\t\"$6\"\t\"$7\"\t\"$8\"\t\"$9\"\t\"$10\"\t\"$11\"\t\"$12\"\t\"$13\"\t\"$14\"\t\"$15\"\t\"$16\"\t\"$17\"\t\"$18}}' > {output} || exit 0 "
+
+rule searchDomainsOnCDD:
+	input:
+		seq=config["prefix"]+".selected.centroids.selected.ORFs.fasta",
+	output:
+		rps=config["prefix"]+".selected.centroids.ORFs.rpsblast",
+		proc=config["prefix"]+".selected.centroids.ORFs.rpsbproc",
+		tab=config["prefix"]+".selected.centroids.ORFs.rpsblast.tab"
+	params:
+		db=config["CDDdb"],
+		dat=config["CDDdataPath"]
+	threads: config["NCPU"]
+	shell:
+		"""
+		rpsblast -query {input} -db {params.db} -outfmt 11 -num_threads {threads} > {output.rps} && \
+		rpsbproc -i {output.rps} -o {output.proc} -f -d {params.dat} && \
+		less {output.proc}  |grep -Pe'^(QUERY|\d)' |awk -F'	' '{{if(/^QUERY/){{split($0,a,\"\t\"); orfid=a[5]}}else{{print orfid\"\t\"$0}}}}' |cut -f1,2,4- | grep Superfamily > {output.tab}
+		"""
+
+rule generateBEDforCentroids:
+	input:
+		f=config["prefix"]+".selected.centroids.fasta",
+		b=config["prefix"]+".filtered-by-length-and-kimura.bed"
+	output:
+		config["prefix"]+".selected.centroids.bed",
+	shell:
+		"less {input.f} |grep \">\" |cut -c2-|grep -Fwf - {input.b} > {output}"
+
+
+rule unifyCentroidsAnnotations:
+	input:
+		rps=config["prefix"]+".selected.centroids.ORFs.rpsblast.tab",
+		hmm=config["prefix"]+".selected.centroids.ORFs.hmmsearch.coords",
+		bls=config["prefix"]+".selected.centroids.ORFs.blast",
+		cent=config["prefix"]+".selected.centroids.bed",
+		orf=config["prefix"]+".selected.centroids.ORFs.bed",
+		cls=config["prefix"]+".selected.centroids.fasta.clstr.tab",
+		rm=config["rmgr"],
+		gs=config["prefix"]+".genomeSize.tab",
+	output:
+		config["prefix"]+".selected.centroids.RData",
+		config["prefix"]+".selected.centroids.table.RData",
+		config["prefix"]+".selected.centroids.pdf"
+	params:
+		config["transcriptsAnnotation"],
+		config["TEsuperfam"],
+		config["prefix"]
+	shell:
+		CONTAINER_R_CMD+" Rscript unifyAnnotations.R {input} {params}"
+
+rule calcGenomeSize:
+	input:
+		config["genomeAssembly"]
+	output:
+		config["prefix"]+".genomeSize.tab"
+	shell:
+		"cat {input} |awk '{{if(/^>/){{defline=substr($0,2); split(defline,a,\" \"); id=a[1]}}else{{s[id]+=length($0)}}}}END{{for(id in s){{print id\"\t\"s[id]}}}}' > {output}"
+
+
+
+
+
+
+rule findFragmentsWithRTtoAlign:
+	input:
+		seq=config["prefix"]+".selected.centroids.ORFs.fasta",
+		tab=config["prefix"]+".selected.centroids.ORFs.rpsblast.tab"
+	output:
+		config["prefix"]+".selected.centroids.ORFs.wRT.fasta"
+	shell:
+		"less {input.tab} |grep RT_like | cut -f1 |sort -u | seqtk subseq {input.seq} - > {output}"	
+
+
+
+
+
+
+#rule filterORFs:
+#	input:
+#		config["prefix"]+".selected.centroids.ORFs.fasta"
+#	output:
+#		config["prefix"]+".selected-ORFs.fasta"
+#	shell:
+
+
+
+
+
+
+# RULES FOR RTE TREES OF INDIVIDUAL SPECIES
+rule runMSA_clustalo_on_centroids:
+	input:
+		config["prefix"]+".selected.centroids.fasta",
+	output:
+		out=config["prefix"]+".selected.centroids.out",
+	threads: config["NCPU"]
+	shell:
+		CLUSTALO_EXEC_PATH+" -i {input} -o {output.out} --threads {threads} --use-kimura"
+
+
+rule getBlocks:
+	input:
+		config["prefix"]+".out",
+	params:
+		"-t=d -b5=h"
+	output:
+		config["prefix"]+".out-gb",
+
+	shell: CONTAINER_CMD+" sh -c '/opt/Gblocks_0.91b/Gblocks {input} {params} > /dev/null; exit 0 ' "
+
+
+rule buildTree:
+	input:
+		config["prefix"]+".out-gb",
+	params:
+		bootstrap=config["bootstrap"],
+		model=config["model"],
+		sufix=config["prefix"]+".RAxML",
+		other=config["other"],
+	output:
+		bestTreeOut="RAxML_bestTree."+config["prefix"]+".RAxML",
+		bootstrapOut="RAxML_bootstrap."+config["prefix"]+".RAxML"
+	threads: config["NCPU"]
+	shell:
+		RAXML_EXEC_PATH+" -s {input} -n {params.sufix} -N {params.bootstrap} -m {params.model} -T {threads} {params.other}"
+
+
+
+# RULES FOR THE SECOND PART OF THE PIPELINE
+
+
+## Building RT protein/CDSs phylogeny
+rule generateMultiSpeciesRTprotein:
+	input:
+		expand("{specie}.selected.centroids.RT-proteins.faa", specie=config["speciesForComparison"])
+	output:
+		"all-species-RTs.faa"
+	shell:
+		"cat {input} > {output}"
+
+rule removeDuplicatesFromRTproteinFasta:
+	input:
+		"all-species-RTs.faa"
+	output:
+		"all-species-RTs.nr.faa"
+	shell:
+		"cat {input} |grep \">\" |cut -c2- |seqtk subseq -t {input} - |awk '{{d[$1]=$3}}END{{ for(i in d){{ print \">\"i\"\\n\"d[i] }} }}' > {output}"
+
+rule removeDuplicatesFromRTcdsFasta:
+	input:
+		"all-species-RTs.fna"
+	output:
+		"all-species-RTs.nr.fna"
+	shell:
+		"cat {input} |grep \">\" |cut -c2- |seqtk subseq -t {input} - |awk '{{d[$1]=$3}}END{{for( i in d ){{ print \">\"i\"\\n\"d[i] }}}}' > {output}"
+
+rule generateMultiSpeciesRT_CDSs:
+	input:
+		expand("{specie}.selected.centroids.RT-proteins.fna", specie=config["speciesForComparison"])
+	output:
+		"all-species-RTs.fna"
+	shell:
+		"cat {input} > {output}"
+
+rule runMSA_clustalo_on_RT_protein_from_centroids:
+	input:
+		"all-species-RTs.nr.faa"
+	output:
+		"all-species-RTs.out"
+	threads: config["NCPU"]
+	shell:
+		CLUSTALO_EXEC_PATH+" -i {input} -o {output} --threads {threads} --use-kimura"
+
+rule runMSA_clustalo_on_RT_CDS_from_centroids:
+	input:
+		"all-species-RTs.nr.fna"
+	output:
+		"all-species-RTs.CDSs.out"
+	threads: config["NCPU"]
+	shell:
+		CLUSTALO_EXEC_PATH+" -i {input} -o {output} --threads {threads} --use-kimura"
+
+rule filterAlignment_on_RT_protein_from_centroids:
+	input:
+		"all-species-RTs.out"
+	params:
+		config["cutoffCovAln"]
+	output:
+		"all-species-RTs.filteredAln.out"
+	shell:
+		CONTAINER_R_CMD+" Rscript filterAlignment.R {input} {params} {output}"
+
+rule filterAlignment_on_RT_CDS_from_centroids:
+	input:
+		"all-species-RTs.CDSs.out"
+	params:
+		config["cutoffCovAln"]
+	output:
+		"all-species-RTs.CDSs.filteredAln.out"
+	shell:
+		CONTAINER_R_CMD+" Rscript filterAlignment.R {input} {params} {output}"
+
+rule getBlocks_on_RT_protein_from_centroids:
+	input:
+		"all-species-RTs.filteredAln.out"
+	params:
+		"-t=p -b5=h"
+	output:
+		"all-species-RTs.filteredAln.out-gb"
+	shell:
+		CONTAINER_CMD+" sh -c '/opt/Gblocks_0.91b/Gblocks {input} {params} > /dev/null; exit 0 ' "
+
+rule getBlocks_on_RT_CDS_from_centroids:
+	input:
+		"all-species-RTs.CDSs.filteredAln.out"
+	params:
+		"-t=n -b5=h"
+	output:
+		"all-species-RTs.CDSs.filteredAln.out-gb"
+	shell:
+		CONTAINER_CMD+" sh -c '/opt/Gblocks_0.91b/Gblocks {input} {params} > /dev/null; exit 0 ' "
+
+rule filterEmptyBlocks_RTprotein:
+	input:
+		"all-species-RTs.filteredAln.out-gb"
+	output:
+		"all-species-RTs.filteredBlock.out-gb"
+	shell:
+		"grep \">\" {input} |cut -c2-|seqtk subseq -t {input} - |perl -pe's/-+//g; s/ //g' |cut -f1,3|awk '{{if(length($2)>0){{print $1}}}}' |seqtk subseq {input} - > {output}"
+rule filterEmptyBlocks_RTcds:
+	input:
+		"all-species-RTs.CDSs.filteredAln.out-gb"
+	output:
+		"all-species-RTs.CDSs.filteredBlock.out-gb"
+	shell:
+		"grep \">\" {input} |cut -c2-|seqtk subseq -t {input} -|perl -pe's/-+//g; s/ //g' |cut -f1,3|awk '{{if(length($2)>0){{print $1}}}}' |seqtk subseq {input} -  > {output}"
+
+rule buildTree_on_RT_protein_from_centroids:
+	input:
+		"all-species-RTs.filteredAln.out"
+		#"all-species-RTs.filteredBlock.out-gb"
+	params:
+		bootstrap=config["bootstrap"],
+		model=config["model_RTtree"],
+		sufix="all-species-RTs.RAxML",
+		other=config["other"],
+	output:
+		bestTreeOut="RAxML_bestTree.all-species-RTs.RAxML",
+		bipartTreeOut="RAxML_bipartitions.all-species-RTs.RAxML",
+		bootstrapOut="RAxML_bootstrap.all-species-RTs.RAxML"
+	threads: config["NCPU"]
+	shell:
+		RAXML_EXEC_PATH+" -s {input} -n {params.sufix} -N {params.bootstrap} -m {params.model} -T {threads} {params.other}"
+
+rule buildTree_on_RT_CDS_from_centroids:
+	input:
+		"all-species-RTs.CDSs.filteredBlock.out-gb"
+	params:
+		bootstrap=config["bootstrap"],
+		model=config["model"],
+		sufix="all-species-RTs.CDSs.RAxML",
+		other=config["other"],
+	output:
+		bestTreeOut="RAxML_bestTree.all-species-RTs.CDSs.RAxML",
+		bootstrapOut="RAxML_bootstrap.all-species-RTs.CDSs.RAxML"
+	threads: config["NCPU"]
+	shell:
+		RAXML_EXEC_PATH+" -s {input} -n {params.sufix} -N {params.bootstrap} -m {params.model} -T {threads} {params.other}"
+
+
+
+##################################
+rule generateMultiSpeciesSelectedFasta:
+	input:
+		expand("{specie}.selected.centroids.fasta", specie=config["speciesForComparison"])
+	output:
+		"all-species-centroids.fasta"
+	shell:
+		"cat {input} > {output}"
+
+rule removeDuplicatesFromCentroidsFasta:
+	input:
+		"all-species-centroids.fasta"
+	output:
+		"all-species-centroids.nr.fasta"
+	shell:
+		"cat {input} |grep \">\" |cut -c2- |seqtk subseq -t {input} - |awk '{{d[$1]=$3}}END{{ for(i in d){{ print \">\"i\"\\n\"d[i] }} }}' > {output}"
+
+rule blastAllVsAllCentroids:
+	input:
+		"all-species-centroids.nr.fasta"
+	output:
+		"all-species-centroids.blast"
+	params:
+		config["nHits_blastAllVsAllCentroids"]
+	shell:
+		"makeblastdb -in {input} -dbtype nucl && blastn -query {input} -db {input} -outfmt '6 std qlen slen' -max_target_seqs {params} | awk '{{qc=$4*100/$13; tc=$4*100/$14; print $0\"\t\"qc\"\t\"tc}}' |  awk '{{if($1!=$2){{split($1,a,\"_\");  split($2,b,\"_\"); print $0\"\t\"a[1]\"_\"a[2]\"\t\"b[1]\"_\"b[2]}}}}' > {output}.tmp && echo \"queryID\tsubjectID\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore\tqlen\tslen\tqcovs\tscovs\tquerySpecie\tsubjectSpecie\" | cat - {output}.tmp > {output}"
+
+
+rule runMSA_clustalo_on_multispecies_centroids:
+	input:
+		"all-species-centroids.nr.fasta"
+	output:
+		"all-species-centroids.out"
+	threads: config["NCPU"]
+	shell:
+		CLUSTALO_EXEC_PATH+" -i {input} -o {output} --threads {threads} --use-kimura"
+
+
+rule filterAlignment_on_multispecies_centroids:
+	input:
+		"all-species-centroids.out"
+	params:
+		config["cutoffCovAln"]
+	output:
+		"all-species-centroids.filteredAln.out"
+	shell:
+		CONTAINER_R_CMD+" Rscript filterAlignment.R {input} {params} {output}"
+
+
+rule getBlocks_on_multispecies_centroids:
+	input:
+		"all-species-centroids.filteredAln.out"
+	params:
+		"-t=d -b5=h"
+	output:
+		"all-species-centroids.filteredAln.out-gb"
+	shell:
+		CONTAINER_CMD+" sh -c '/opt/Gblocks_0.91b/Gblocks {input} {params} > /dev/null; exit 0 ' "
+
+rule filterEmptyBlocks_centroids:
+	input:
+		"all-species-centroids.filteredAln.out-gb"
+	output:
+		"all-species-centroids.filteredBlock.out-gb"
+	shell:
+		"grep \">\" {input} |cut -c2-|seqtk subseq -t {input} -|perl -pe's/-+//g; s/ //g' |cut -f1,3|awk '{{if(length($2)>0){{print $1}}}}' |seqtk subseq {input} -  > {output}"
+
+
+rule buildTree_on_multispecies_centroids:
+	input:
+		"all-species-centroids.filteredBlock.out-gb"
+	params:
+		bootstrap=config["bootstrap"],
+		model=config["model"],
+		sufix="all-species-centroids.RAxML",
+		other=config["other"],
+	output:
+		bestTreeOut="RAxML_bestTree.all-species-centroids.RAxML",
+		bootstrapOut="RAxML_bootstrap.all-species-centroids.RAxML"
+	threads: config["NCPU"]
+	shell:
+		RAXML_EXEC_PATH+" -s {input} -n {params.sufix} -N {params.bootstrap} -m {params.model} -T {threads} {params.other}"
+
+
+
+
+rule plotTreeOldVersion:
+	input:
+		rm=config["rmgr"],
+		tree="RAxML_bestTree."+config["prefix"]+".RAxML",
+		ann=config["genomeAnnotation"],
+		tandemScore=config["prefix"]+".tandemFinder.RData"
+	params:
+		fam=config["TEfams"],
+	output:
+		config["prefix"]+".FinalSummaryFigure.RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript FinalSummaryFigure.R {input.rm} {params.fam} {input.ann} {input.tree} {input.tandemScore} "+config["prefix"]
+
+
+
+rule summarizeRMGRforTEsuperfam:
+
+rule mergeMultipleTEsuperfamSpeciesSummary:
+
+rule plotTree:
+	input:
+#		tr="RAxML_bestTree.all-species-RTs.RAxML",
+		tr="RAxML_bipartitions.all-species-RTs.RAxML",
+		p=expand("{p}.selected.centroids.table.RData", p=config["speciesForComparison"])
+	params:
+		sp=expand("{sp}", sp=config["speciesNames"]),
+		pr="all-species-RTs"
+	output:
+		"all-species-RTs.plotTree.RData",
+		"all-species-RTs.plotTree.pdf"
+	shell:
+		CONTAINER_R_CMD+" Rscript plotTree.R {input.tr} {params.pr} {params.sp} {input.p}"
+
+
+
+
+

@@ -1,0 +1,34 @@
+CONTAINER_R_CMD="docker run -v /:/home/user -v /storage2/tmp:/tmp -w /home/user/storage2/dump/Austrolebias/TE-wide-genome-size-contrib fgajardoe/r-custom:latest "
+
+
+#configfile: "config.common.pairwise.yaml"
+configfile: "config.common.yaml"
+
+rule calcContrib:
+	input:
+		config["rmgr"]
+
+	output:
+		config["prefix"]+".RData"
+	params:
+		config["ordersToConsider"],
+		config["prefix"]
+
+	shell:
+		CONTAINER_R_CMD+" Rscript calcContrib.R {input} {params}"
+
+rule mergeContribTables:
+	input:
+		expand("{sp}.gene-annotation.gff",sp=config["species"]),
+		expand("{sp}.genomeSize.tab",sp=config["species"]),
+		expand("{sp}.RData",sp=config["species"])
+	output:
+		config["mergePrefix"]+".pdf"
+	params:
+		config["mergePrefix"],
+		config["collapse_lower_than_mean_contrib"],
+		config["onlyCoreTEsuperfams"],
+		config["TEordersToCollapseAsOther"],
+	shell:
+		CONTAINER_R_CMD+" Rscript mergeMultispeciesContrib.R {params} {input}"
+

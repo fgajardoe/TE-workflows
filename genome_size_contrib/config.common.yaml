@@ -1,0 +1,26 @@
+species:
+  - Austrolebias_charrua
+  - Nematolebias_whitei
+  - Cynopoecilus_melanotaenia
+  - Austrofundulus_limnaeus
+  - Kryptolebias_marmoratus
+  - Nothobranchius_furzeri
+  - Oryzias_latipes
+
+mergePrefix: "consolidatedTable"
+
+
+# Genome size contribution by TEorder
+ordersToConsider: "LINE,SINE,DNA,LTR,Retroposon,RC,tRNA,Unknown"
+TEordersToCollapseAsOther: "tRNA,Unknown,Retroposon,RC"
+
+
+
+
+# for TEsuperfams barplot
+collapse_lower_than_mean_contrib: "F"
+onlyCoreTEsuperfams: "T"
+
+
+
+

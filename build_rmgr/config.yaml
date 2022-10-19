@@ -1,0 +1,9 @@
+species:
+  Nematolebias_whitei: "Nematolebias_whitei.genome.fasta.cat.gz"
+  Cynopoecilus_melanotaenia: "Cynopoecilus_melanotaenia.genome.fasta.cat.gz"
+  Austrofundulus_limnaeus: "Austrofundulus_limnaeus.genome.fasta.cat.gz"
+  Kryptolebias_marmoratus: "Kryptolebias_marmoratus.genome.fasta.cat.gz"
+  Nothobranchius_furzeri: "Nothobranchius_furzeri.genome.fasta.cat.gz"
+  Oryzias_latipes: "Oryzias_latipes.genome.fasta.cat.gz"
+  Austrolebias_charrua: "Austrolebias_charrua.genome.fasta.cat.gz"
+

@@ -1,0 +1,50 @@
+R_CONTAINER_CMD="docker run -v `pwd`:/home/user fgajardoe/r-custom:latest  "
+
+
+X=config["xmax"]
+Y=config["ymax"]
+TITLE=config["title"]
+
+def get_input(wildcards):
+    return config["species"][wildcards.specie]
+
+rule all:
+	input:
+		config["prefix"]+".kimuraDistrib.pdf",
+		config["prefix"]+".genomeSizeContrib.pdf",
+
+
+rule generateTableForPlotting:
+	input:
+		expand("{specie}.bed",specie=config["species"])
+	params:
+		expand("{specie}",specie=config["species"])
+		
+	output:
+		config["prefix"]+".tab"
+	shell:
+		"echo {params} | perl -pe's/ /\n/g; s/,//g; s/\[//g; s/\]//g' |awk '{{print $0\"\t\"$0\".bed\"}}' > {output}"
+
+rule plotKimura:
+	input:
+#		config["prefix"]+".tab",
+		config["BedFile_Specie_GenomeSize_equivalence"],
+		config["TEclassification"]
+	params:
+		x=X,
+		y=Y,
+		t=TITLE,
+		TEordersKimura=config["TEorders_to_show_kimura"],
+		speciesOrder=config["speciesOrder"],
+		TEordersGenomeContrib=config["TEorders_to_show_genomeContrib"],
+		TElevel=config["TElevel"],
+		normalizeByTotal=config["normalizeByTotal"],
+
+	output:
+		config["prefix"]+".kimuraDistrib.pdf",
+		config["prefix"]+".genomeSizeContrib.pdf",
+		#config["prefix"]+".RData"
+
+	shell:
+		"docker run -v `pwd`:/home/user fgajardoe/r-custom:latest Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} "+config["prefix"]
+

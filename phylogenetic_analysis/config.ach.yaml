@@ -1,0 +1,21 @@
+##### RUN
+
+prefix: "ACH-RTE-BovB"
+
+
+##### Repeats and Genome data
+
+#     Genome
+
+genomeAssembly: genomes/Austrolebias_charrua.genome.fasta
+genomeAnnotation: aus.genes.gff3
+
+#     Repeats
+
+rmgr: genomes/Austrolebias_charrua.rmgr.RData
+TEfams: "ACH_rnd-1_family-146" #Interesting families in previous annotattion: "rnd-5_family-204","rnd-6_family-117"
+
+#     Transcriptome
+
+transcriptsAnnotation: ../TranscriptMappingToAssembly/Austrolebias_charrua.transcriptome.bed
+

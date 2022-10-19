@@ -1,0 +1,81 @@
+##### RUN
+
+NCPU: 6
+
+##### Filtering of fragments
+
+#     by kimura and length
+
+TEsuperfam: "RTE-Charrua"
+kimuraCutoff: max
+minLength: 0
+
+#     by coverage over the consensus
+
+consensusFamilyCov: 30
+consensusFamiliesFasta: all_species-families.fasta 
+maxNumberOfSelectedFragments: 100000000 #60000
+
+
+# Clustering of TE fragments: Obtention of representative sequences
+minIdentityToGroupSequences: 0.7
+
+
+# ORF search
+blastDbForCheckingORFs: /storage/blast_db/uniprot_sprot.fasta
+
+minIdentityToGroupORFSequences: 0.7
+minCovORFvsKnownProtein: 30
+
+# RT motif searchs
+hmmModel: RVT_1.hmm 
+
+# Search for known domains using NCBI CDD
+CDDdb:  /storage/blast_db/Cdd_NCBI
+CDDdataPath: /opt/RpsbProc-x64-linux/data
+
+# Phylogenetic reconstruction with RAxML
+
+bootstrap: 100
+model: "GTRGAMMA"
+other: "-f a -x 12345 -p 12345 --bootstop-perms 1000"
+
+model_RTtree: "PROTGAMMAGTR"
+
+
+# tandemFinder parameters
+
+genomeTileWidth: 20000
+genomeTileWidthMinLength: 10000
+
+minNumFragmentsOnTileToPlot: 20
+minIdentityToConsiderTandem: 0.9
+
+# Multispecies workflows
+speciesForComparison:
+  - ACH-RTE-BovB
+  - NWHI-RTE-BovB
+  - CMEL-RTE-BovB
+  - ALIM-RTE-BovB
+  - KMAR-RTE-BovB
+  - NFUR-RTE-BovB
+  - OLAT-RTE-BovB
+
+speciesNames:
+  - Austrolebias_charrua
+  - Nematolebias_whitei
+  - Cynopoecilus_melanotaenia
+  - Austrofundulus_limnaeus
+  - Kryptolebias_marmoratus
+  - Nothobranchius_furzeri
+  - Oryzias_latipes
+
+
+cutoffCovAln: 30
+
+# BLAST all vs all centroids
+
+nHits_blastAllVsAllCentroids: 10
+
+transcriptsAnnotation: "none"
+
