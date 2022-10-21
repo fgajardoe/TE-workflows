@@ -4,6 +4,9 @@ library(RColorBrewer)
 library(gridExtra)
 source("plotKimuraDistance.functions.R")
 
+
+system("pwd")
+
 # functions
 
 addOther=function(d,genomeSizes){
@@ -25,7 +28,6 @@ plotGenomeSizeContribution=function(d.bed.lst, TEclassification=NULL, genomeSize
 		sp.bed=d.bed.lst[[sp]]
 		#read.table("Nematolebias_whitei.bed",sep="\t",comment.char="@",col.names=c("seqname","start","end","name","score","strand","kimura")) 
 		d.bed.lst[[sp]]$fragmentSize=d.bed.lst[[sp]]$end-d.bed.lst[[sp]]$start
-
                 d.bed.lst[[sp]]$Specie=as.character(sp)
 
         }
@@ -78,9 +80,19 @@ outprefix=args[11]
 inTable=args[1]
 eqFile=args[2]
 
-inTable=read.table(as.character(inTable),sep="\t",col.names=c("specie","bedFile","genomeSize"))
+inTable=read.table(as.character(inTable),sep="\t",col.names=c("specie","bedFile","genomeSizeFile"))
 bedFiles=inTable %>% pull(bedFile,specie)
-genomeSizes=inTable %>% pull(genomeSize,specie)
+
+
+# read and sum fragments(contigs, scaffolds, etc) sizes
+genomeSizes=c()
+genomeSizesFiles=inTable %>% pull(genomeSizeFile,specie)
+for(sp in names(genomeSizesFiles)){
+	genomeSizeFile=genomeSizesFiles[sp]
+	gz.tibble=read.table(genomeSizeFile, sep="\t",col.names=c("seqname","length")) %>% tibble
+	genomeSizes[sp]=gz.tibble %>% pull(length) %>% sum 
+}
+
 
 # Parameters Kimura plot
 title=as.character(args[5])
@@ -129,7 +141,7 @@ for(sp in inTable$specie){
 
 
 # load TE equivalence table
-eq=read.table(as.character(eqFile),col.names=c("family_id","TEorder","TEsuperfam")) %>% as_tibble
+eq=read.table(as.character(eqFile),col.names=c("family_id","TEsuperfam","TEorder")) %>% as_tibble
 
 
 # Genome size contribution
@@ -198,17 +210,24 @@ alias.sp=c(	"Austrolebias_charrua"="A. charrua",
 
 rm(d)
 gc()
-save.image("test.RData")
 
 
 
 
 # Por cada TEorder o TEsuperfam
 for(TEo in TEorders){
+	print(paste0("Plotting ",TEo,"..."))
 	if(TElevel=="TEorder"){
 		d.text.TEo=d.text %>% filter(TEorder==TEo)
 		d.text.TEo=d.text.TEo %>% ungroup %>% select(Specie,bps,perc)
 		d.text.TEo=d.text.TEo %>% mutate(x=30,y=(150000/7)+rev(seq(1,7)*50000))
+
+		nTEoInData=d.counts %>% filter(TEorder==TEo) %>% NROW %>% as.numeric
+		if(nTEoInData==0){
+			print(paste0("TE order ",TEo," not found in data. Skipping"))
+			p.lst[[TEo]]=ggplot()+geom_text(aes(x=1,y=1,label="Order\nnot found in the data"),size=6)+theme_void()+ggtitle(as.character(TEo))
+			next
+		}
 
 		p.lst[[TEo]]= d.counts %>%
 				filter(TEorder==TEo) %>% 
@@ -230,8 +249,15 @@ for(TEo in TEorders){
 	if(TElevel=="TEsuperfamily"){
 		d.text.TEo=d.text %>% filter(TEsuperfam==TEo)
 		d.text.TEo=d.text.TEo %>% ungroup %>% select(Specie,bps,perc)
-		d.text.TEo=d.text.TEo %>% mutate(x=18,y=200000-(seq(20000,2000000,by=20000)[1:NROW(.)]))
+		#d.text.TEo=d.text.TEo %>% mutate(x=18,y=200000-(seq(20000,2000000,by=20000)[1:NROW(.)]))
+		d.text.TEo=d.text.TEo %>% mutate(x=18,y=ymax-(seq(ymax/10,ymax*10,by=ymax/10)[1:NROW(.)]))
 
+		nTEoInData=d.counts %>% filter(TEsuperfam==TEo) %>% NROW %>% as.numeric
+		if(nTEoInData==0){
+			print(paste0("TE superfamily ",TEo," not found in data. Skipping"))
+			p.lst[[TEo]]=ggplot()+geom_text(aes(x=1,y=1,label="Superfamily\nnot found in the data"),size=6)+theme_void()+ggtitle(as.character(TEo))
+			next
+		}
 
 		p.lst[[TEo]]= d.counts %>% 
 			filter(TEsuperfam==TEo) %>% 
@@ -253,8 +279,11 @@ for(TEo in TEorders){
 	}
 }
 
+print("building plot legend ...")
 p.legend=g_legend(p.legend)
 p.lst[["legend"]]=p.legend
+
+save.image("test.RData")
 
 library(grid)
 

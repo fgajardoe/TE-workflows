@@ -1,4 +1,4 @@
-R_CONTAINER_CMD="docker run -v `pwd`:/home/user fgajardoe/r-custom:latest  "
+R_CONTAINER_CMD="docker run -v /:/home/user -w /home/user/storage2/dump/Orestias/TE-workflows/kimura_distributions fgajardoe/r-custom:latest  "
 
 
 X=config["xmax"]
@@ -6,7 +6,11 @@ Y=config["ymax"]
 TITLE=config["title"]
 
 def get_input(wildcards):
-    return config["species"][wildcards.specie]
+    return config["speciesInsertions"][wildcards.specie]
+
+def get_input_asm(wildcards):
+    return config["speciesAssemblies"][wildcards.specie]
+
 
 rule all:
 	input:
@@ -14,21 +18,35 @@ rule all:
 		config["prefix"]+".genomeSizeContrib.pdf",
 
 
+
+
+rule calcGenomeSize:
+	input:
+		get_input_asm
+	output:
+		"{specie}.genomeSize.tab"
+	shell:
+		"cat {input} |awk '{{if(/^>/){{defline=substr($0,2); split(defline,a,\" \"); id=a[1]}}else{{s[id]+=length($0)}}}}END{{for(id in s){{print id\"\t\"s[id]}}}}' > {output}"
+
+
+
+
 rule generateTableForPlotting:
 	input:
-		expand("{specie}.bed",specie=config["species"])
+		bed=expand(config["build_rmgr_path"]+"/{specie}.bed",specie=config["speciesInsertions"]),
+		genomesize=expand("{specie}.genomeSize.tab",specie=config["speciesInsertions"])
 	params:
-		expand("{specie}",specie=config["species"])
+		expand("{specie}",specie=config["speciesInsertions"])
 		
 	output:
 		config["prefix"]+".tab"
 	shell:
-		"echo {params} | perl -pe's/ /\n/g; s/,//g; s/\[//g; s/\]//g' |awk '{{print $0\"\t\"$0\".bed\"}}' > {output}"
+		"echo {params} | perl -pe's/ /\n/g; s/,//g; s/\[//g; s/\]//g' |awk '{{print $0}}' > tmpSpecies && echo {input.bed} | perl -pe's/ +/\n/g' > tmpInsertionsBed && echo {input.genomesize} | perl -pe 's/ +/\n/g' > tmpGenomeSize && paste tmpSpecies tmpInsertionsBed tmpGenomeSize > {output}"
 
 rule plotKimura:
 	input:
-#		config["prefix"]+".tab",
-		config["BedFile_Specie_GenomeSize_equivalence"],
+		config["prefix"]+".tab",
+#		config["BedFile_Specie_GenomeSize_equivalence"],
 		config["TEclassification"]
 	params:
 		x=X,
@@ -46,5 +64,5 @@ rule plotKimura:
 		#config["prefix"]+".RData"
 
 	shell:
-		"docker run -v `pwd`:/home/user fgajardoe/r-custom:latest Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} "+config["prefix"]
+		R_CONTAINER_CMD+" Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} "+config["prefix"]
 

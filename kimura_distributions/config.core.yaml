@@ -1,35 +1,47 @@
-title: "Core TE superfamilies"
-prefix: "annuals-consensus-TEsuperfamily-core" 
+title: "TE superfamilies"
+prefix: "panel_cyprinodontoidei" 
 
-TEclassification: "consensus-classifications-for-all-species.3cols.tab"
+TEclassification: "run1.consensus-classification.3cols.tab"
 
 
 # Genome contrib plot
 TEorders_to_show_genomeContrib: "LINE,SINE,LTR,Retroposon,DNA,RC,Satellite,rRNA,tRNA,Unknown"
-speciesOrder: "Austrolebias_charrua,Nematolebias_whitei,Cynopoecilus_melanotaenia,Austrofundulus_limnaeus,Kryptolebias_marmoratus,Nothobranchius_furzeri,Oryzias_latipes"
-BedFile_Specie_GenomeSize_equivalence: annuals-consensus.tab
+
+speciesOrder: "Anableps_anableps,Cyprinodon_variegatus,Orestias_ascotanensis,Orestias_chungarensis,Orestias_gloriae,Orestias_laucaensis" 
+
 normalizeByTotal: "F"
+
+
+
 
 # kimura plot
 #TEorders_to_show_kimura: "LINE,SINE,DNA,LTR"
+#TElevel: "TEorder"
 
 # core selected
 #TEorders_to_show_kimura: "Rex-Babar,RTE-BovB,L2,hAT-Charlie,hAT-Ac,TcMar-Tc1"
 TElevel: "TEsuperfamily"
-
 # core complete
 TEorders_to_show_kimura: "CMC-EnSpm,Copia,DIRS,Dong-R4,ERV1,Gypsy,Helitron,I,IS3EU,L1,L1-Tx1,L2,MIR,Ngaro,P,PIF-Harbinger,PIF-ISL2EU,Pao,Penelope,PiggyBac,Proto2,RTE-BovB,Rex-Babar,TcMar-Tc1,TcMar-Tc2,TcMar-Tigger,Unknown,hAT,hAT-Ac,hAT-Blackjack,hAT-Charlie,hAT-Tip100,hAT-hAT5"
 
 #ymax: 450000 # sirve para hacer graficos a nivel de TEorder
-ymax: 200000
+ymax: 60000
 xmax: 50
 
-species:
-  Nematolebias_whitei: "Nematolebias_whitei.genome.fasta.cat.gz"
-  Cynopoecilus_melanotaenia: "Cynopoecilus_melanotaenia.genome.fasta.cat.gz"
-  Austrofundulus_limnaeus: "Austrofundulus_limnaeus.genome.fasta.cat.gz"
-  Kryptolebias_marmoratus: "Kryptolebias_marmoratus.genome.fasta.cat.gz"
-  Nothobranchius_furzeri: "Nothobranchius_furzeri.genome.fasta.cat.gz"
-  Oryzias_latipes: "Oryzias_latipes.genome.fasta.cat.gz"
-  Austrolebias_charrua: "Austrolebias_charrua.genome.fasta.cat.gz"
+build_rmgr_path: ../build_rmgr
 
+speciesInsertions:
+   Anableps_anableps: ../build_rmgr/Anableps_anableps.bed
+   Cyprinodon_variegatus: ../build_rmgr/Cyprinodon_variegatus.bed
+   Orestias_ascotanensis: ../build_rmgr/Orestias_ascotanensis.bed
+   Orestias_chungarensis: ../build_rmgr/Orestias_chungarensis.bed
+   Orestias_gloriae: ../build_rmgr/Orestias_gloriae.bed
+   Orestias_laucaensis: ../build_rmgr/Orestias_laucaensis.bed
+
+speciesAssemblies:
+   Anableps_anableps: ../../repeatModelerOrestias/Anableps_anableps.genome.fasta
+   Cyprinodon_variegatus: ../../repeatModelerOrestias/Cyprinodon_variegatus.genome.fasta
+   Orestias_ascotanensis: ../../repeatModelerOrestias/Orestias_ascotanensis.genome.fasta
+   Orestias_chungarensis: ../../repeatModelerOrestias/Orestias_chungarensis.genome.fasta
+   Orestias_gloriae: ../../repeatModelerOrestias/Orestias_gloriae.genome.fasta
+   Orestias_laucaensis: ../../repeatModelerOrestias/Orestias_laucaensis.genome.fasta

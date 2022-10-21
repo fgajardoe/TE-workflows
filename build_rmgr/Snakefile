@@ -11,7 +11,7 @@ rule all:
 rule generateRMGR:
 	input:
 		"{specie}.bed",
-		config["eqFile"]
+		config["TEclassification"]
 	output:
 		"{specie}.rmgr.RData"
 	shell:
