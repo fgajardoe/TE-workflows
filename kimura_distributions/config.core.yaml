@@ -1,7 +1,7 @@
-title: "TE superfamilies"
-prefix: "panel_cyprinodontoidei" 
+title: "Core"
+prefix: "panel_Cyprinodontoidei" 
 
-TEclassification: "run1.consensus-classification.3cols.tab"
+TEclassification: "run2.consensus-classification.3cols.tab"
 
 
 # Genome contrib plot
@@ -11,9 +11,6 @@ speciesOrder: "Anableps_anableps,Cyprinodon_variegatus,Orestias_ascotanensis,Ore
 
 normalizeByTotal: "F"
 
-
-
-
 # kimura plot
 #TEorders_to_show_kimura: "LINE,SINE,DNA,LTR"
 #TElevel: "TEorder"
@@ -21,6 +18,7 @@ normalizeByTotal: "F"
 # core selected
 #TEorders_to_show_kimura: "Rex-Babar,RTE-BovB,L2,hAT-Charlie,hAT-Ac,TcMar-Tc1"
 TElevel: "TEsuperfamily"
+
 # core complete
 TEorders_to_show_kimura: "CMC-EnSpm,Copia,DIRS,Dong-R4,ERV1,Gypsy,Helitron,I,IS3EU,L1,L1-Tx1,L2,MIR,Ngaro,P,PIF-Harbinger,PIF-ISL2EU,Pao,Penelope,PiggyBac,Proto2,RTE-BovB,Rex-Babar,TcMar-Tc1,TcMar-Tc2,TcMar-Tigger,Unknown,hAT,hAT-Ac,hAT-Blackjack,hAT-Charlie,hAT-Tip100,hAT-hAT5"
 

@@ -1,13 +1,12 @@
 species:
-  - Austrolebias_charrua
-  - Nematolebias_whitei
-  - Cynopoecilus_melanotaenia
-  - Austrofundulus_limnaeus
-  - Kryptolebias_marmoratus
-  - Nothobranchius_furzeri
-  - Oryzias_latipes
+  - Orestias_gloriae
+  - Orestias_ascotanensis
+  - Orestias_laucaensis
+  - Orestias_chungarensis
+  - Anableps_anableps
+  - Cyprinodon_variegatus
 
-mergePrefix: "consolidatedTable"
+mergePrefix: "panel_Cyprinodontoidei_genomeContrib"
 
 
 # Genome size contribution by TEorder
@@ -21,6 +20,6 @@ TEordersToCollapseAsOther: "tRNA,Unknown,Retroposon,RC"
 collapse_lower_than_mean_contrib: "F"
 onlyCoreTEsuperfams: "T"
 
-
+tree: astralBestTree.nwk 
 
 

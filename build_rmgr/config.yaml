@@ -1,4 +1,6 @@
-TEclassification: run1.consensus-classification.3cols.tab
+TEclassification: run2.consensus-classification.3cols.tab
+
+#run1.consensus-classification.3cols.tab
 
 species:
   Orestias_ascotanensis: Orestias_ascotanensis.genome.fasta.cat.gz

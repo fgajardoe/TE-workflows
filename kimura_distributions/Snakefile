@@ -16,6 +16,8 @@ rule all:
 	input:
 		config["prefix"]+".kimuraDistrib.pdf",
 		config["prefix"]+".genomeSizeContrib.pdf",
+		config["prefix"]+".TEorder.kimuraDistrib.pdf",
+		config["prefix"]+".TEorder.genomeSizeContrib.pdf"
 
 
 
@@ -65,4 +67,27 @@ rule plotKimura:
 
 	shell:
 		R_CONTAINER_CMD+" Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} "+config["prefix"]
+
+rule plotKimura_TEorders:
+	input:
+		config["prefix"]+".tab",
+#		config["BedFile_Specie_GenomeSize_equivalence"],
+		config["TEclassification"]
+	params:
+		x=X,
+		y=Y,
+		t=TITLE,
+		TEordersKimura=config["TEorders_to_show_genomeContrib"],
+		speciesOrder=config["speciesOrder"],
+		TEordersGenomeContrib=config["TEorders_to_show_genomeContrib"],
+		TElevel="TEorder",
+		normalizeByTotal=config["normalizeByTotal"],
+
+	output:
+		config["prefix"]+".TEorder.kimuraDistrib.pdf",
+		config["prefix"]+".TEorder.genomeSizeContrib.pdf",
+		#config["prefix"]+".RData"
+
+	shell:
+		R_CONTAINER_CMD+" Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} "+config["prefix"]+".TEorder"
 

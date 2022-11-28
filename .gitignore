@@ -7,3 +7,11 @@
 *.tab
 *.lst
 tmp*
+*.gff
+*.gff3
+*.gtf
+*.fasta
+*.fna
+*.faa
+*.fa
+*.nwk

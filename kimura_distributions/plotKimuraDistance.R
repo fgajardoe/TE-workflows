@@ -169,10 +169,16 @@ d$kimura_int=as.integer(d$kimura)
 # Calculamos el numero de fragmentos por kimura
 if(TElevel=="TEorder"){
 	d.counts=d %>% count(kimura_int,TEorder,Specie)
+	d.text=d %>% group_by(TEorder,Specie) %>% summarise(bps=sum(abs(end-start)), Specie=unique(Specie)) %>% mutate(perc=100*bps/genomeSizes[Specie])
 }
 if(TElevel=="TEsuperfamily"){
 	d.counts=d %>% count(kimura_int,TEsuperfam,Specie)
+	d.text=d %>% group_by(TEsuperfam,Specie) %>% summarise(bps=sum(abs(end-start)), Specie=unique(Specie)) %>% mutate(perc=100*bps/genomeSizes[Specie])
 }
+
+#colnames(d.counts)=c("kimura_int","TEclass","Specie")
+
+
 if(any(normalizeByTotal)){
 	maxValue.v=d.counts %>% group_by(Specie) %>% summarise(maxValue=sum(n)) %>% pull(maxValue,Specie)
 	ymax=(ymax/max(maxValue.v))*100
@@ -182,7 +188,6 @@ if(any(normalizeByTotal)){
 
 #TEsuperfam.nBps.v=d %>% group_by(TEsuperfam) %>% summarise(nBpsTotalSuperfam=sum(abs(end-start))) %>% pull(nBpsTotalSuperfam,TEsuperfam)
 
-d.text=d %>% group_by(TEsuperfam,Specie) %>% summarise(bps=sum(abs(end-start)), Specie=unique(Specie)) %>% mutate(perc=100*bps/genomeSizes[Specie])
 
 
 TEorders=strsplit(TEorderSelection,",")[[1]]
@@ -220,7 +225,7 @@ for(TEo in TEorders){
 	if(TElevel=="TEorder"){
 		d.text.TEo=d.text %>% filter(TEorder==TEo)
 		d.text.TEo=d.text.TEo %>% ungroup %>% select(Specie,bps,perc)
-		d.text.TEo=d.text.TEo %>% mutate(x=30,y=(150000/7)+rev(seq(1,7)*50000))
+		d.text.TEo=d.text.TEo %>% mutate(x=18,y=ymax-(seq(ymax/10,ymax*10,by=ymax/10)[1:NROW(.)]))
 
 		nTEoInData=d.counts %>% filter(TEorder==TEo) %>% NROW %>% as.numeric
 		if(nTEoInData==0){
@@ -239,7 +244,9 @@ for(TEo in TEorders){
 				ggtitle(as.character(TEo))+
 				theme(legend.position="none")+
 				ylab("Count")+xlab("Kimura distance")+
-				geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(bps," bps (",perc,"%)"), colour=Specie), position=position_stack(vjust = 0.5), inherit.aes = T)
+			#	geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(bps," bps (",perc,"%)"), colour=Specie), position=position_stack(vjust = 0.5), inherit.aes = T)
+				geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(format(bps/1000000,digit=2)," Mbps (",format(perc,digit=2),"%) "), colour=Specie), 
+			  	  inherit.aes = F, hjust=0,size=5)
 
 		if(any(renderLegendPlot)){
 			p.legend=d.counts %>% filter(TEorder==TEo) %>% ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+geom_point()+geom_line()+xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+ theme_classic()+scale_color_manual(values=pal)+ggtitle(as.character(TEo))+ylab("Count")+xlab("Kimura distance")
@@ -287,7 +294,13 @@ save.image("test.RData")
 
 library(grid)
 
-title=paste0(title," - Kimura distribution ","\n")
+if(TElevel=="TEorder"){
+TElevelStr="TE orders"
+} else {
+TElevelStr="TE superfamilies"
+}
+
+title=paste0(title," - ",TElevelStr," - Kimura distribution ","\n")
 title.grob=textGrob(as.character(title),gp=gpar(fontsize=20,font=3))
 grid=do.call("arrangeGrob",c(p.lst, ncol=plot.ncol))
 

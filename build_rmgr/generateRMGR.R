@@ -8,7 +8,7 @@ args=commandArgs(T)
 bed=read.table(as.character(args[1]),sep="\t",fill=T) %>% tibble
 
 eq=read.table(as.character(args[2]),sep="\t",fill=T) %>% tibble
-colnames(eq)=c("TEfam","TEorder","TEsuperfam")
+colnames(eq)=c("TEfam","TEsuperfam","TEorder")
 outprefix=as.character(args[3])
 
 bed=bed %>% left_join(.,eq,by=c("V4"="TEfam"))
