@@ -385,9 +385,15 @@ dev.off()
 
 library(ggrepel)
 
-pdf(paste0(outprefix,".genomeSizePerSpecie.TEsuperfam.pdf"),width=12,height=4)
+pdf(paste0(outprefix,".genomeSizePerSpecie.TEsuperfam.pdf"),width=12, height=4*length(speciesOrder))
+#,height=4)
 flag=1
 scaleSize=50000000
+
+p.TEsuperfamBarplot.lst=vector(mode="list",length(speciesOrder))
+names(p.TEsuperfamBarplot.lst)=speciesOrder
+
+
 for(sp in speciesOrder){
 	print(paste0("plotting TE superfams barplot with TE order colours for ",sp))
 	p.sp=d.tesuperfam.core %>% filter(specie==sp) %>% ggplot(aes(x=`Total bps`,y=specie, fill=TEsuperfam,group=TEorder))+
@@ -411,17 +417,102 @@ for(sp in speciesOrder){
 		flag=0
 	}
 	p.sp=p.sp + theme(legend.position="none")
-	print(p.sp)
+	#print(p.sp)
+	p.TEsuperfamBarplot.lst[[sp]]=p.sp
 }
 grid.arrange(p.sp.legend)
+
+do.call("grid.arrange", c(p.TEsuperfamBarplot.lst, ncol=1))
+
+
+
 dev.off()
 
 
 
 
+# log2fold-change calculation
+
+library(ggsci)
+refSpecie="Austrolebias_charrua"
+mergedTable$specie=factor(mergedTable$specie,levels=speciesOrder,ordered=T)
+pal.species=pal_uchicago()(length(speciesOrder))
+
+pal.species=c(Austrolebias_charrua="#767676FF",
+	      Nematolebias_whitei="#155F83FF",
+	      Cynopoecilus_melanotaenia="#FFA319FF",
+	      Austrofundulus_limnaeus="#800000FF",
+	      Kryptolebias_marmoratus="#8A9045FF",
+	      Nothobranchius_furzeri="#C16622FF",
+	      Oryzias_latipes="#8F3931FF")
+
+
+coreTEsupefams.noUnk=coreTEsupefams[coreTEsupefams!="Unknown"]
+coreTEsupefams.noUnk=c(coreTEsupefams.noUnk,"Non-repetitive")
+p.logfc.lst=vector(mode="list",length(coreTEsupefams.noUnk))
+names(p.logfc.lst)=coreTEsupefams.noUnk
+#nBPs
+
+mergedTable.NonRepetitive=tibble(TEsuperfam="Non-repetitive",
+				 nBPs= (d %>% filter(TEorder=="Other genomic elements") %>% pull(`Total bps`)),
+				 TEorder="None",
+				 specie=(d %>% filter(TEorder=="Other genomic elements")%>% pull(specie)),
+				 perc_of_genome_size=(nBPs/gz[specie])*100,
+				 TEsuperfam.complete="Non-repetitive")
+
+mergedTable=rbind(mergedTable,mergedTable.NonRepetitive)
+
+# define ymax and min
+#ymaxNumber=mergedTable %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
+ymaxNumber=12
+for(TEsf in coreTEsupefams.noUnk){
+	nBPsRef=mergedTable %>% filter(TEsuperfam==TEsf, specie==refSpecie) %>% pull(nBPs) %>% unlist
+	p.logfc.lst[[TEsf]]=mergedTable %>% filter(TEsuperfam==TEsf, specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEsf)+ theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1), legend.position="none")+scale_fill_manual(values=pal.species)+ylim(c(-ymaxNumber,ymaxNumber))+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF")
+
+}
+#
+p.logfc.perc.lst=vector(mode="list",length(coreTEsupefams.noUnk))
+names(p.logfc.perc.lst)=coreTEsupefams.noUnk
+#%
+
+# define ymax and min
+#ymaxNumber=mergedTable %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(perc_of_genome_sizeRef/perc_of_genome_size)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
+
+for(TEsf in coreTEsupefams.noUnk){
+	perc_of_genome_sizeRef=mergedTable %>% filter(TEsuperfam==TEsf, specie==refSpecie) %>% pull(perc_of_genome_size) %>% unlist
+	p.logfc.perc.lst[[TEsf]]=mergedTable %>% filter(TEsuperfam==TEsf, specie!=refSpecie) %>% mutate(log2FC=log2(perc_of_genome_sizeRef/perc_of_genome_size)) %>% ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEsf)+ theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1), legend.position="none")+scale_fill_manual(values=pal.species)+ylim(c(-ymaxNumber,ymaxNumber))+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF")
+
+}
 
 
 
+# preparing PDF page size
+nplots=length(p.logfc.lst) %>% as.numeric()
+maxNumberOfPlots=1000
+multiples_of_5=(1:maxNumberOfPlots)%%5
+names(multiples_of_5)=seq(1:maxNumberOfPlots)
+multiples_of_5=multiples_of_5 %>% .[.==0]
+page_height.v=rep(0,maxNumberOfPlots)
+names(page_height.v)=seq(1,maxNumberOfPlots)
+z=1
+for(i in names(multiples_of_5)){ for(j in seq(1:5)){ page_height.v[z]=i; z=z+1 }  }
+page_height=page_height.v[nplots] %>% as.numeric()
+
+p.logfc.legend=p.logfc.lst[[1]]+theme(legend.position="right")
+p.logfc.legend=g_legend(p.logfc.legend)
+p.logfc.lst[["Lengend"]]=p.logfc.legend
+p.logfc.perc.lst[["Lengend"]]=p.logfc.legend
+grid=do.call("grid.arrange", c(p.logfc.lst, ncol=5))
+grid.perc=do.call("grid.arrange", c(p.logfc.perc.lst, ncol=5))
+
+title.grob=textGrob(as.character("Log2 fold change of the number of bases in A. charrua vs all other species"),gp=gpar(fontsize=20,font=3))
+title.grob.perc=textGrob(as.character("Log2 fold change of the proportion of bases in A. charrua vs all other species"),gp=gpar(fontsize=20,font=3))
+
+# plotting PDF
+pdf(paste(outprefix,".log2FC.pdf",sep=""),height=page_height,width=20)
+grid.arrange(grid,top=title.grob)
+grid.arrange(grid.perc,top=title.grob.perc)
+dev.off()
 
 
 

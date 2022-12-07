@@ -1,4 +1,4 @@
-CONTAINER_R_CMD="docker run -v /:/home/user -v /storage2/tmp:/tmp -w /home/user/storage2/dump/Orestias/TE-workflows/genome_size_contrib fgajardoe/r-custom:latest "
+CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user/scratch/TE-workflows/genome_size_contrib fgajardoe/r-custom:latest "
 
 
 #configfile: "config.common.pairwise.yaml"
