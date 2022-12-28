@@ -1,26 +1,27 @@
 species:
-  - Austrolebias_charrua
-  - Nematolebias_whitei
-  - Cynopoecilus_melanotaenia
-  - Austrofundulus_limnaeus
-  - Kryptolebias_marmoratus
-  - Nothobranchius_furzeri
-  - Oryzias_latipes
+  - Orestias_ascotanensis
+  - Orestias_chungarensis
+  - Orestias_laucaensis
+  - Orestias_gloriae
+  - Cyprinodon_variegatus
+  - Anableps_anableps
 
-mergePrefix: "panel_Aplocheilidae_genomeContrib"
+mergePrefix: "panel_Cyprinodontoidei_genomeContrib"
 
 
 # Genome size contribution by TEorder
 ordersToConsider: "LINE,SINE,DNA,LTR,Retroposon,RC,tRNA,Unknown"
 TEordersToCollapseAsOther: "tRNA,Unknown,Retroposon,RC"
+#TEordersToCollapseAsOther: "none"
 
-
+refSpecieForLog2FC: "Orestias_ascotanensis"
 
 
 # for TEsuperfams barplot
 collapse_lower_than_mean_contrib: "F"
 onlyCoreTEsuperfams: "T"
 
-tree: astralBestTree.nwk.olat-added
+tree: astralBestTree.nwk
 
-
+speciesColourFile: "colourFileOrestiasPanel.tab" # default or tab separated file
+forceThisYlimit: "2" # default, disable, or a number

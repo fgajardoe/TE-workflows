@@ -19,10 +19,13 @@ min_num_bps=19012566 # mean ; primer quantile 368995
 
 library(ape)
 library(ggtree)
-tree=read.tree(args[5])
+tree=read.tree(args[8])
+refSpecie=as.character(args[5])
+colorFile=as.character(args[6])
+ylimit=as.character(args[7])
 p.tree=ggtree(tree) + geom_tiplab(align=TRUE) + hexpand(.01)
 
-pairedFilesArgs=args[6:length(args)]
+pairedFilesArgs=args[9:length(args)]
 
 
 
@@ -100,9 +103,12 @@ collapse_lower_than_mean_contrib=as.logical(args[2]) #F
 onlyCoreTEsuperfams=as.logical(args[3]) #T
 
 #options(scipen=100000000000)
+if(args[4] != "none"){
 elementsCollapsedToOther=strsplit(as.character(args[4]),",")
 elementsCollapsedToOther=elementsCollapsedToOther[[1]]
-
+} else {
+elementsCollapsedToOther="none"
+}
 
 numberOfSpecies=mergedTable$specie %>% unique %>% length
 coreTEsupefams=mergedTable %>% select(TEsuperfam,specie) %>% group_by(TEsuperfam) %>% summarise(nSpecies=n_distinct(specie)) %>% filter(nSpecies==numberOfSpecies) %>% pull(TEsuperfam)
@@ -167,11 +173,11 @@ dev.off()
 
 mergedTable=mergedTable %>% mutate(TEorder=as.character(TEorder))
 if(length(elementsCollapsedToOther)>0){
+#if(elementsCollapsedToOther!="none"){
 	mergedTable=mergedTable %>% mutate(TEorder=as.character(TEorder))
 	mergedTable=mergedTable %>% mutate(TEorder=ifelse(TEorder %in% elementsCollapsedToOther, "Other TEs",TEorder))
 
 }
-
 # Remove insertions with no order classification
 mergedTable=mergedTable %>% filter(is.na(TEorder)==F)
 
@@ -194,7 +200,8 @@ d.order=d.order[c(
 			    5, #sine
 			    3, #ltr
 			    4)] #other
-d.order=c(d.order,"Other genomic elements")
+d.order=c(d.order,"No-repetitive")
+#d.order=c(d.order,"Other genomic elements")
 #d.order=factor(d.order,levels=d.order, ordered=T)
 d.order.pal=c(
 		   "#ff6f00ff", #coding
@@ -278,7 +285,7 @@ pdf(paste0(outprefix,".genomeSizePerSpecie.pdf"),width=12,height=5)
 for(sp in speciesOrder){
 	print(paste0("calculating substraction from genome size for ",sp,"..."))
 	sumSp=d %>% filter(specie==sp) %>% pull(`Total bps`) %>% sum
-	d.other=tibble(TEorder="Other genomic elements",specie=sp,`Total bps`=gz[[sp]]-sumSp)
+	d.other=tibble(TEorder="No-repetitive",specie=sp,`Total bps`=gz[[sp]]-sumSp)
 	d=rbind(d,d.other)
 
 }
@@ -433,42 +440,113 @@ dev.off()
 
 # log2fold-change calculation
 
-library(ggsci)
-refSpecie="Austrolebias_charrua"
-mergedTable$specie=factor(mergedTable$specie,levels=speciesOrder,ordered=T)
-pal.species=pal_uchicago()(length(speciesOrder))
 
-pal.species=c(Austrolebias_charrua="#767676FF",
-	      Nematolebias_whitei="#155F83FF",
-	      Cynopoecilus_melanotaenia="#FFA319FF",
-	      Austrofundulus_limnaeus="#800000FF",
-	      Kryptolebias_marmoratus="#8A9045FF",
-	      Nothobranchius_furzeri="#C16622FF",
-	      Oryzias_latipes="#8F3931FF")
+
+library(ggsci)
+mergedTable$specie=factor(mergedTable$specie,levels=speciesOrder,ordered=T)
+
+
+if(colorFile=="none"){
+	pal.species=rep("black",length(speciesOrder))
+}
+if(colorFile=="default"){
+	pal.species=pal_uchicago()(length(speciesOrder))
+} 
+if(colorFile!="none" && colorFile!="default"){
+
+	pal.species=read.table(colorFile, sep="\t",comment.char="@",col.names=c("Specie","Colour")) %>% tibble %>% pull(Colour, Specie)
+
+	#pal.species=c(Austrolebias_charrua="#767676FF",
+	#	      Nematolebias_whitei="#155F83FF",
+	#	      Cynopoecilus_melanotaenia="#FFA319FF",
+	#	      Austrofundulus_limnaeus="#800000FF",
+	#	      Kryptolebias_marmoratus="#8A9045FF",
+	#	      Nothobranchius_furzeri="#C16622FF",
+	#	      Oryzias_latipes="#8F3931FF")
+}
+
+
 
 
 coreTEsupefams.noUnk=coreTEsupefams[coreTEsupefams!="Unknown"]
-coreTEsupefams.noUnk=c(coreTEsupefams.noUnk,"Non-repetitive")
-p.logfc.lst=vector(mode="list",length(coreTEsupefams.noUnk))
-names(p.logfc.lst)=coreTEsupefams.noUnk
+coreTEsupefams.noUnk=c(coreTEsupefams.noUnk,"No-repetitive")
+
+TEorders=TEorder.v %>% unique
+
+p.logfc.lst=vector(mode="list",length(c(coreTEsupefams.noUnk,TEorders)))
+names(p.logfc.lst)=c(coreTEsupefams.noUnk,TEorders)
 #nBPs
 
-mergedTable.NonRepetitive=tibble(TEsuperfam="Non-repetitive",
-				 nBPs= (d %>% filter(TEorder=="Other genomic elements") %>% pull(`Total bps`)),
-				 TEorder="None",
-				 specie=(d %>% filter(TEorder=="Other genomic elements")%>% pull(specie)),
+mergedTable.NonRepetitive=tibble(TEsuperfam="No-repetitive",
+				 #nBPs= (d %>% filter(TEorder=="Other genomic elements") %>% pull(`Total bps`)),
+				 nBPs= (d %>% filter(TEorder=="No-repetitive") %>% pull(`Total bps`)),
+				 TEorder="No-repetitive",
+				 #TEorder="None",
+				 specie=(d %>% filter(TEorder=="No-repetitive")%>% pull(specie)),
+				 #specie=(d %>% filter(TEorder=="Other genomic elements")%>% pull(specie)),
 				 perc_of_genome_size=(nBPs/gz[specie])*100,
-				 TEsuperfam.complete="Non-repetitive")
+				 TEsuperfam.complete="No-repetitive")
 
 mergedTable=rbind(mergedTable,mergedTable.NonRepetitive)
 
 # define ymax and min
-#ymaxNumber=mergedTable %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
-ymaxNumber=12
+#ymaxNumber=12
+ymaxNumber=0
+
+
+# Log2FC analysis for TEorders
+mergedTable.TEorders=mergedTable %>% select(-TEsuperfam) %>% group_by(TEorder,specie) %>% summarise(sum(nBPs)) %>% mutate(nBPs=`sum(nBPs)`) %>% select(-`sum(nBPs)`)
+save.image("test.RData")
+print("ploting Log2FC for TEorders...")
+for(TEo in TEorders){
+	print(TEo)
+	nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecie) %>% pull(nBPs) %>% unlist
+
+	p.logfc.lst[[TEo]]=mergedTable.TEorders %>% filter(TEorder==TEo, specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEo,paste0(refSpecie,": ",round(nBPsRef/1000000)," Mbps"))+ theme(title=element_text(size=14),axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=10),axis.text.y=element_text(size=12), legend.position="none")+scale_fill_manual(values=pal.species)+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF")
+	#+annotation_logticks(base=2,sides="l")
+
+
+	#+scale_y_continuous(trans = log2_trans(),
+        #             breaks = trans_breaks("log2", function(x) 2^x),
+         #            labels = trans_format("log2", math_format(2^.x))) 
+
+	ymaxNumberFam=mergedTable.TEorders %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
+	if(ymaxNumberFam>ymaxNumber){
+		ymaxNumber=ymaxNumberFam
+	}
+}
+
+
+#ymaxNumber=0
 for(TEsf in coreTEsupefams.noUnk){
 	nBPsRef=mergedTable %>% filter(TEsuperfam==TEsf, specie==refSpecie) %>% pull(nBPs) %>% unlist
-	p.logfc.lst[[TEsf]]=mergedTable %>% filter(TEsuperfam==TEsf, specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEsf)+ theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1), legend.position="none")+scale_fill_manual(values=pal.species)+ylim(c(-ymaxNumber,ymaxNumber))+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF")
+	p.logfc.lst[[TEsf]]=mergedTable %>% filter(TEsuperfam==TEsf, specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEsf,paste0(refSpecie,": ",round(nBPsRef/1000000)," Mbps"))+ theme(title=element_text(size=14),axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=10),axis.text.y=element_text(size=12), legend.position="none")+scale_fill_manual(values=pal.species)+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF") 
 
+		#ggplot(aes(x=specie,y=log2FC,fill=specie))+geom_bar(stat="identity",width=0.7)+theme_minimal()+ggtitle(TEsf)+ theme(axis.text.x=element_text(angle=45,hjust=1,vjust=1), legend.position="none")+scale_fill_manual(values=pal.species)+geom_hline(yintercept=c(0), linetype="dotted",colour="#767676FF")
+	ymaxNumberFam=mergedTable %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(nBPsRef/nBPs)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
+	if(ymaxNumberFam>ymaxNumber){
+		ymaxNumber=ymaxNumberFam
+	}
+}
+
+
+
+if(ylimit=="default"){
+	forceThisYlimit=NULL
+} else {
+	forceThisYlimit=as.numeric(ylimit)
+}
+if(!is.null(forceThisYlimit)){
+	ymaxNumber=as.numeric(forceThisYlimit)
+}
+
+print(paste0("ylim is: +/-", ymaxNumber))
+
+#for(TEsf in coreTEsupefams.noUnk){
+if(ylimit!="disable"){
+	for(TEsf in names(p.logfc.lst)){
+		p.logfc.lst[[TEsf]]=p.logfc.lst[[TEsf]]+ylim(c(-ymaxNumber,ymaxNumber))
+	}
 }
 #
 p.logfc.perc.lst=vector(mode="list",length(coreTEsupefams.noUnk))
@@ -477,6 +555,7 @@ names(p.logfc.perc.lst)=coreTEsupefams.noUnk
 
 # define ymax and min
 #ymaxNumber=mergedTable %>% filter(specie!=refSpecie) %>% mutate(log2FC=log2(perc_of_genome_sizeRef/perc_of_genome_size)) %>% pull(log2FC) %>% abs %>% max %>% ceiling
+
 
 for(TEsf in coreTEsupefams.noUnk){
 	perc_of_genome_sizeRef=mergedTable %>% filter(TEsuperfam==TEsf, specie==refSpecie) %>% pull(perc_of_genome_size) %>% unlist
@@ -505,8 +584,8 @@ p.logfc.perc.lst[["Lengend"]]=p.logfc.legend
 grid=do.call("grid.arrange", c(p.logfc.lst, ncol=5))
 grid.perc=do.call("grid.arrange", c(p.logfc.perc.lst, ncol=5))
 
-title.grob=textGrob(as.character("Log2 fold change of the number of bases in A. charrua vs all other species"),gp=gpar(fontsize=20,font=3))
-title.grob.perc=textGrob(as.character("Log2 fold change of the proportion of bases in A. charrua vs all other species"),gp=gpar(fontsize=20,font=3))
+title.grob=textGrob(as.character(paste0("Log2 fold change of the number of bases in ",refSpecie," vs all other species")),gp=gpar(fontsize=20,font=3))
+title.grob.perc=textGrob(as.character(paste0("Log2 fold change of the proportion of bases in ",refSpecie," vs all other species")),gp=gpar(fontsize=20,font=3))
 
 # plotting PDF
 pdf(paste(outprefix,".log2FC.pdf",sep=""),height=page_height,width=20)
@@ -516,7 +595,38 @@ dev.off()
 
 
 
+# calculating the contribution of each TE order to the differences in the genome size between the reference specie and each other in the panel
+refSpecieGenomeSize=as.numeric(gz[[refSpecie]])
 
+for(sp in speciesOrder){
+	if(sp != refSpecie){
+		spGenomeSize=as.numeric(gz[[sp]])
+		deltaGS=abs(refSpecieGenomeSize-spGenomeSize)
+
+		totalDeltaTEo=0
+		for(TEo in TEorders){
+
+			nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecie) %>% pull(nBPs) %>% unlist
+			nBPsSp=mergedTable.TEorders %>% filter(TEorder==TEo, specie==sp) %>% pull(nBPs) %>% unlist
+			deltaTEo=nBPsRef-nBPsSp
+			percDeltaGSdueTEo=deltaTEo*100/deltaGS
+			totalDeltaTEo=totalDeltaTEo+deltaTEo
+			print(paste0("==> For ",refSpecie," vs ",sp," <=="))
+			print(paste0("Delta genome size = ",deltaGS," bps"))
+			print(paste0("Delta TE order(",TEo,") = ",deltaTEo))
+			print(paste0("Weight of Delta TE order(",TEo,") on Delta genome size = ",percDeltaGSdueTEo))
+		}
+		print(paste0("Sum of TEorders differences: ",totalDeltaTEo))
+		for(TEo in TEorders){
+			nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecie) %>% pull(nBPs) %>% unlist
+			nBPsSp=mergedTable.TEorders %>% filter(TEorder==TEo, specie==sp) %>% pull(nBPs) %>% unlist
+			deltaTEo=nBPsRef-nBPsSp
+			percSumDeltaTEodueTEo=deltaTEo*100/totalDeltaTEo
+			print(paste0("Weight of Delta TE order(",TEo,") on sum of TEorders differences: ",percSumDeltaTEodueTEo))
+
+		}
+	}
+}
 
 
 

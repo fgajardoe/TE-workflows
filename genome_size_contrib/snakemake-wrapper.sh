@@ -9,7 +9,8 @@ CPU=6
 #snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.nfur.yaml Nothobranchius_furzeri.RData
 #snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.olat.yaml Oryzias_latipes.RData
 
-snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.olat.yaml panel_Aplocheilidae_genomeContrib.pdf
+#snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.olat.yaml panel_Aplocheilidae_genomeContrib.pdf
+snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.olat.yaml panel_Cyprinodontoidei_genomeContrib.pdf
 
 
 #snakemake --rerun-incomplete ${ARGS} -j ${CPU} -k --keep-incomplete --configfile=config.cvar.yaml Cyprinodon_variegatus.RData

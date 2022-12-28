@@ -1,4 +1,5 @@
-CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user/scratch/TE-workflows/genome_size_contrib fgajardoe/r-custom:latest "
+CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user"+os.getcwd()+" fgajardoe/r-custom:latest "
+#CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user/storage2/dump/Orestias/TE-workflows/genome_size_contrib fgajardoe/r-custom:latest "
 
 
 #configfile: "config.common.pairwise.yaml"
@@ -30,6 +31,9 @@ rule mergeContribTables:
 		config["collapse_lower_than_mean_contrib"],
 		config["onlyCoreTEsuperfams"],
 		config["TEordersToCollapseAsOther"],
+		config["refSpecieForLog2FC"],
+		config["speciesColourFile"],
+		config["forceThisYlimit"]
 	shell:
 		CONTAINER_R_CMD+" Rscript mergeMultispeciesContrib.R {params} {input}"
 
