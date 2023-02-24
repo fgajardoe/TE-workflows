@@ -25,7 +25,8 @@ rule mergeContribTables:
 		expand("{sp}.genomeSize.tab",sp=config["species"]),
 		expand("{sp}.RData",sp=config["species"])
 	output:
-		config["mergePrefix"]+".pdf"
+		config["mergePrefix"]+".pdf",
+		config["mergePrefix"]+".logfc.RData"	
 	params:
 		config["mergePrefix"],
 		config["collapse_lower_than_mean_contrib"],
@@ -36,4 +37,14 @@ rule mergeContribTables:
 		config["forceThisYlimit"]
 	shell:
 		CONTAINER_R_CMD+" Rscript mergeMultispeciesContrib.R {params} {input}"
+
+
+rule merge_LogFC_and_kimura_plots:
+	input:
+		config["mergePrefix"]+".logfc.RData",	
+		config["kimuraPlotsRData"]
+	output:
+		config["mergePrefix"]+".LogFC_kimura_plots.pdf"
+	shell:
+		CONTAINER_R_CMD+" Rscript merge_LogFC_and_kimura_plots.R {input} "+config["mergePrefix"]
 

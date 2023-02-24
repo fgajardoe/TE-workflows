@@ -7,7 +7,7 @@ species:
   - Anableps_anableps
 
 mergePrefix: "panel_Cyprinodontoidei_genomeContrib"
-
+kimuraPlotsRData: ../kimura_distributions/panel_Cyprinodontoidei.TEorder.kimura.RData
 
 # Genome size contribution by TEorder
 ordersToConsider: "LINE,SINE,DNA,LTR,Retroposon,RC,tRNA,Unknown"

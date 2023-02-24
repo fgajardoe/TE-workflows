@@ -9,6 +9,8 @@ TEorders_to_show_genomeContrib: "LINE,SINE,LTR,Retroposon,DNA,RC,Satellite,rRNA,
 
 speciesOrder: "Anableps_anableps,Cyprinodon_variegatus,Orestias_ascotanensis,Orestias_chungarensis,Orestias_gloriae,Orestias_laucaensis" 
 
+speciesPalette: colourFileOrestiasPanel.tab
+
 normalizeByTotal: "F"
 
 # kimura plot

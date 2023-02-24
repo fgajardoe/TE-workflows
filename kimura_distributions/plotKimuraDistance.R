@@ -76,7 +76,8 @@ args=commandArgs(trailingOnly=TRUE)
 TElevel=as.character(args[9])
 normalizeByTotal=as.character(args[10])
 
-outprefix=args[11]
+colFile=read.table(as.character(args[11]),sep="\t",col.names=c("specie","colour"),comment.char="@") %>% tibble
+outprefix=args[12]
 inTable=args[1]
 eqFile=args[2]
 
@@ -196,7 +197,8 @@ TEorders=strsplit(TEorderSelection,",")[[1]]
 library(ggsci)
 
 #pal=colorRampPalette(brewer.pal(pal.nlimit, pal))(length(d.lst))
-pal=pal_uchicago(palette="default",alpha=0.7)(length(d.lst))
+#pal=pal_uchicago(palette="default",alpha=0.7)(length(d.lst))
+pal=colFile %>% pull(colour, specie)
 rm(d.lst)
 
 p.lst=vector(mode="list",length(TEorders))
@@ -230,7 +232,7 @@ for(TEo in TEorders){
 		nTEoInData=d.counts %>% filter(TEorder==TEo) %>% NROW %>% as.numeric
 		if(nTEoInData==0){
 			print(paste0("TE order ",TEo," not found in data. Skipping"))
-			p.lst[[TEo]]=ggplot()+geom_text(aes(x=1,y=1,label="Order\nnot found in the data"),size=6)+theme_void()+ggtitle(as.character(TEo))
+			p.lst[[TEo]]=ggplot()+geom_text(aes(x=1,y=1,label="Order\nnot found in the data"),size=6)+theme_void()+ggtitle(as.character(TEo))+theme(title=element_text(size=20))
 			next
 		}
 
@@ -242,11 +244,15 @@ for(TEo in TEorders){
 				theme_classic()+
 				scale_color_manual(values=pal)+
 				ggtitle(as.character(TEo))+
-				theme(legend.position="none")+
-				ylab("Count")+xlab("Kimura distance")+
+				theme(legend.position="none",
+				      title=element_text(size=20),
+				      axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=15),
+				      axis.text.y=element_text(size=15))+
+	   			scale_y_continuous(labels=function(x)x/1000)+
+				ylab("Count (x1000)")+xlab("Kimura distance")+
 			#	geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(bps," bps (",perc,"%)"), colour=Specie), position=position_stack(vjust = 0.5), inherit.aes = T)
 				geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(format(bps/1000000,digit=2)," Mbps (",format(perc,digit=2),"%) "), colour=Specie), 
-			  	  inherit.aes = F, hjust=0,size=5)
+			  	  inherit.aes = F, hjust=0,size=7) # solia ser 5
 
 		if(any(renderLegendPlot)){
 			p.legend=d.counts %>% filter(TEorder==TEo) %>% ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+geom_point()+geom_line()+xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+ theme_classic()+scale_color_manual(values=pal)+ggtitle(as.character(TEo))+ylab("Count")+xlab("Kimura distance")
@@ -290,7 +296,6 @@ print("building plot legend ...")
 p.legend=g_legend(p.legend)
 p.lst[["legend"]]=p.legend
 
-save.image("test.RData")
 
 library(grid)
 
@@ -303,6 +308,8 @@ TElevelStr="TE superfamilies"
 title=paste0(title," - ",TElevelStr," - Kimura distribution ","\n")
 title.grob=textGrob(as.character(title),gp=gpar(fontsize=20,font=3))
 grid=do.call("arrangeGrob",c(p.lst, ncol=plot.ncol))
+
+save(p.lst,file=paste0(outprefix,".kimura.RData"))
 
 #pequenio ajuste para el pdf
 #if(TElevel=="TEorder"){
