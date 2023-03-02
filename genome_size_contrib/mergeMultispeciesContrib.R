@@ -409,7 +409,7 @@ dev.off() # cierra .genomeSizePerSpecie.pdf
 
 library(ggrepel)
 
-pdf(paste0(outprefix,".genomeSizePerSpecie.TEsuperfam.pdf"),width=12, height=4*length(speciesOrder))
+pdf(paste0(outprefix,".genomeSizePerSpecie.TEsuperfam.pdf"),width=18, height=4*length(speciesOrder))
 #,height=4)
 flag=1
 scaleSize=50000000
