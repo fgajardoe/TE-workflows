@@ -1,0 +1,15 @@
+species:
+  - Austrolebias_charrua
+  - Nematolebias_whitei
+  - Cynopoecilus_melanotaenia
+  - Austrofundulus_limnaeus
+  - Kryptolebias_marmoratus
+  - Nothobranchius_furzeri
+  - Oryzias_latipes
+
+prefix: "panel_Aplocheilidae"
+
+TEclassification: "consensus-classifications-for-all-species.3cols.compatible-column-order.tab"
+
+speciesColourFile: "colourFileAustrolebiasPanel.tab" # default or tab separated file
+TEordersColourFile: "TEordersPalette.tab"

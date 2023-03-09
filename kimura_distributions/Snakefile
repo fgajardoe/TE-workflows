@@ -1,9 +1,4 @@
-R_CONTAINER_CMD="docker run -v /:/home/user -w /home/user/storage2/dump/Orestias/TE-workflows/kimura_distributions fgajardoe/r-custom:latest  "
-
-
-X=config["xmax"]
-Y=config["ymax"]
-TITLE=config["title"]
+R_CONTAINER_CMD="docker run -v /:/home/user -w /home/user/"+os.getcwd()+" fgajardoe/r-custom:latest  "
 
 def get_input(wildcards):
     return config["speciesInsertions"][wildcards.specie]
@@ -14,13 +9,10 @@ def get_input_asm(wildcards):
 
 rule all:
 	input:
-		config["prefix"]+".kimuraDistrib.pdf",
-		config["prefix"]+".genomeSizeContrib.pdf",
+		config["prefix"]+".TEsuperfam.kimuraDistrib.pdf",
+		config["prefix"]+".TEsuperfam.genomeSizeContrib.pdf",
 		config["prefix"]+".TEorder.kimuraDistrib.pdf",
 		config["prefix"]+".TEorder.genomeSizeContrib.pdf"
-
-
-
 
 rule calcGenomeSize:
 	input:
@@ -36,6 +28,7 @@ rule calcGenomeSize:
 rule generateTableForPlotting:
 	input:
 		bed=expand(config["build_rmgr_path"]+"/{specie}.bed",specie=config["speciesInsertions"]),
+		#bed=config["speciesInsertions"],
 		genomesize=expand("{specie}.genomeSize.tab",specie=config["speciesInsertions"])
 	params:
 		expand("{specie}",specie=config["speciesInsertions"])
@@ -45,29 +38,29 @@ rule generateTableForPlotting:
 	shell:
 		"echo {params} | perl -pe's/ /\n/g; s/,//g; s/\[//g; s/\]//g' |awk '{{print $0}}' > tmpSpecies && echo {input.bed} | perl -pe's/ +/\n/g' > tmpInsertionsBed && echo {input.genomesize} | perl -pe 's/ +/\n/g' > tmpGenomeSize && paste tmpSpecies tmpInsertionsBed tmpGenomeSize > {output}"
 
-rule plotKimura:
+rule plotKimura_TEsuperfams:
 	input:
 		config["prefix"]+".tab",
 #		config["BedFile_Specie_GenomeSize_equivalence"],
 		config["TEclassification"]
 	params:
-		x=X,
-		y=Y,
-		t=TITLE,
-		TEordersKimura=config["TEorders_to_show_kimura"],
+		x=config["xmax_TEsuperfam"],
+		y=config["ymax_TEsuperfam"],
+		t=config["title"],
+		TEordersKimura=config["TEsuperfams_to_show_kimura"],
 		speciesOrder=config["speciesOrder"],
 		TEordersGenomeContrib=config["TEorders_to_show_genomeContrib"],
-		TElevel=config["TElevel"],
+		TElevel="TEsuperfamily",
 		normalizeByTotal=config["normalizeByTotal"],
 		pal=config["speciesPalette"],
 
 	output:
-		config["prefix"]+".kimuraDistrib.pdf",
-		config["prefix"]+".genomeSizeContrib.pdf",
+		config["prefix"]+".TEsuperfam.kimuraDistrib.pdf",
+		config["prefix"]+".TEsuperfam.genomeSizeContrib.pdf",
 		#config["prefix"]+".RData"
 
 	shell:
-		R_CONTAINER_CMD+" Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} {params.pal} "+config["prefix"]
+		R_CONTAINER_CMD+" Rscript plotKimuraDistance.R {input} {params.x} {params.y} '{params.t}' {params.TEordersKimura} {params.speciesOrder} {params.TEordersGenomeContrib} {params.TElevel} {params.normalizeByTotal} {params.pal} "+config["prefix"]+".TEsuperfam"
 
 rule plotKimura_TEorders:
 	input:
@@ -75,10 +68,10 @@ rule plotKimura_TEorders:
 #		config["BedFile_Specie_GenomeSize_equivalence"],
 		config["TEclassification"]
 	params:
-		x=X,
-		y=Y,
-		t=TITLE,
-		TEordersKimura=config["TEorders_to_show_genomeContrib"],
+		x=config["xmax_TEorder"],
+		y=config["ymax_TEorder"],
+		t=config["title"],
+		TEordersKimura=config["TEorders_to_show_kimura"],
 		speciesOrder=config["speciesOrder"],
 		TEordersGenomeContrib=config["TEorders_to_show_genomeContrib"],
 		TElevel="TEorder",

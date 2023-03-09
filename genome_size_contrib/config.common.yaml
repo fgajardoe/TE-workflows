@@ -1,3 +1,4 @@
+# panel_Cyprinodontoidei
 species:
   - Orestias_ascotanensis
   - Orestias_chungarensis
@@ -8,14 +9,12 @@ species:
 
 mergePrefix: "panel_Cyprinodontoidei_genomeContrib"
 kimuraPlotsRData: ../kimura_distributions/panel_Cyprinodontoidei.TEorder.kimura.RData
+refSpecieForLog2FC: "Orestias_ascotanensis"
 
 # Genome size contribution by TEorder
 ordersToConsider: "LINE,SINE,DNA,LTR,Retroposon,RC,tRNA,Unknown"
 TEordersToCollapseAsOther: "tRNA,Unknown,Retroposon,RC"
 #TEordersToCollapseAsOther: "none"
-
-refSpecieForLog2FC: "Orestias_ascotanensis"
-
 
 # for TEsuperfams barplot
 collapse_lower_than_mean_contrib: "F"

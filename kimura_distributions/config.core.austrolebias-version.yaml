@@ -1,0 +1,48 @@
+title: "Core"
+prefix: "panel_Aplocheilidae" 
+
+TEclassification: "consensus-classifications-for-all-species.3cols.compatible-column-order.tab"
+
+
+# Genome contrib plot
+TEorders_to_show_genomeContrib: "LINE,SINE,LTR,Retroposon,DNA,RC,Satellite,rRNA,tRNA,Unknown"
+
+speciesOrder: "Austrolebias_charrua,Nematolebias_whitei,Cynopoecilus_melanotaenia,Austrofundulus_limnaeus,Kryptolebias_marmoratus,Nothobranchius_furzeri,Oryzias_latipes"
+
+
+speciesPalette: colourFileAustrolebiasPanel.tab
+
+normalizeByTotal: "F"
+
+# kimura plots
+
+TEsuperfams_to_show_kimura: "CMC-EnSpm,Copia,DIRS,Dong-R4,ERV1,Gypsy,Helitron,I,IS3EU,L1,L1-Tx1,L2,MIR,Ngaro,P,PIF-Harbinger,PIF-ISL2EU,Pao,Penelope,PiggyBac,Proto2,RTE-BovB,Rex-Babar,TcMar-Tc1,TcMar-Tc2,TcMar-Tigger,Unknown,hAT,hAT-Ac,hAT-Blackjack,hAT-Charlie,hAT-Tip100,hAT-hAT5" #core complete
+TEorders_to_show_kimura: "LINE,SINE,DNA,LTR"
+
+#TEsuperfams_to_show_kimura: "Rex-Babar,RTE-BovB,L2,hAT-Charlie,hAT-Ac,TcMar-Tc1" # core selected
+
+ymax_TEsuperfam: 100000
+xmax_TEsuperfam: 50
+
+ymax_TEorder: 450000
+xmax_TEorder: 50
+
+build_rmgr_path: beds_austrolebias-version/
+
+speciesInsertions:
+  Austrolebias_charrua: beds_austrolebias-version/Austrolebias_charrua.bed 
+  Nematolebias_whitei: beds_austrolebias-version/Nematolebias_whitei.bed
+  Cynopoecilus_melanotaenia: beds_austrolebias-version/Cynopoecilus_melanotaenia.bed
+  Austrofundulus_limnaeus: beds_austrolebias-version/Austrofundulus_limnaeus.bed
+  Kryptolebias_marmoratus: beds_austrolebias-version/Kryptolebias_marmoratus.bed
+  Nothobranchius_furzeri: beds_austrolebias-version/Nothobranchius_furzeri.bed
+  Oryzias_latipes: beds_austrolebias-version/Oryzias_latipes.bed
+
+speciesAssemblies:
+  Austrolebias_charrua: /storage2/dump/Austrolebias/repeatModeler/Austrolebias_charrua.genome.fasta
+  Cynopoecilus_melanotaenia: /storage2/dump/Austrolebias/repeatModeler/Cynopoecilus_melanotaenia.genome.fasta
+  Nematolebias_whitei: /storage2/dump/Austrolebias/repeatModeler/Nematolebias_whitei.genome.fasta
+  Austrofundulus_limnaeus: /storage2/dump/Austrolebias/repeatModeler/Austrofundulus_limnaeus.genome.fasta
+  Kryptolebias_marmoratus: /storage2/dump/Austrolebias/repeatModeler/Kryptolebias_marmoratus.genome.fasta
+  Nothobranchius_furzeri: /storage2/dump/Austrolebias/repeatModeler/Nothobranchius_furzeri.genome.fasta
+  Oryzias_latipes: /storage2/dump/Austrolebias/repeatModeler/Oryzias_latipes.genome.fasta

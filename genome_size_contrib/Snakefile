@@ -2,8 +2,8 @@ CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user"+os.getcwd()+" fgajard
 #CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user/storage2/dump/Orestias/TE-workflows/genome_size_contrib fgajardoe/r-custom:latest "
 
 
-#configfile: "config.common.pairwise.yaml"
-configfile: "config.common.yaml"
+configfile: "config.common-ach-version.yaml"
+#configfile: "config.common.yaml"
 
 rule calcContrib:
 	input:
@@ -39,12 +39,21 @@ rule mergeContribTables:
 		CONTAINER_R_CMD+" Rscript mergeMultispeciesContrib.R {params} {input}"
 
 
-rule merge_LogFC_and_kimura_plots:
+rule merge_LogFC_and_kimura_plots_TEorders:
 	input:
 		config["mergePrefix"]+".logfc.RData",	
-		config["kimuraPlotsRData"]
+		config["kimuraPlotsRData_TEorder"]
 	output:
-		config["mergePrefix"]+".LogFC_kimura_plots.pdf"
+		config["mergePrefix"]+".TEorder.LogFC_kimura_plots.pdf"
 	shell:
-		CONTAINER_R_CMD+" Rscript merge_LogFC_and_kimura_plots.R {input} "+config["mergePrefix"]
+		CONTAINER_R_CMD+" Rscript merge_LogFC_and_kimura_plots.R {input} "+config["mergePrefix"]+".TEorder"
+
+rule merge_LogFC_and_kimura_plots_TEsuperfams:
+	input:
+		config["mergePrefix"]+".logfc.RData",	
+		config["kimuraPlotsRData_TEsuperfam"]
+	output:
+		config["mergePrefix"]+".TEsuperfam.LogFC_kimura_plots.pdf"
+	shell:
+		CONTAINER_R_CMD+" Rscript merge_LogFC_and_kimura_plots.R {input} "+config["mergePrefix"]+".TEsuperfam"
 

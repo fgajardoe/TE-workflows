@@ -1,0 +1,28 @@
+species:
+  - Austrolebias_charrua
+  - Nematolebias_whitei
+  - Cynopoecilus_melanotaenia
+  - Austrofundulus_limnaeus
+  - Kryptolebias_marmoratus
+  - Nothobranchius_furzeri
+  - Oryzias_latipes
+
+mergePrefix: "panel_Aplocheilidae_genomeContrib"
+kimuraPlotsRData_TEorder: ../kimura_distributions/panel_Aplocheilidae.TEorder.kimura.RData 
+kimuraPlotsRData_TEsuperfam: ../kimura_distributions/panel_Aplocheilidae.TEsuperfam.kimura.RData 
+
+# Genome size contribution by TEorder
+ordersToConsider: "LINE,SINE,DNA,LTR,Retroposon,RC,tRNA,Unknown"
+TEordersToCollapseAsOther: "tRNA,Unknown,Retroposon,RC"
+#TEordersToCollapseAsOther: "none"
+
+# for TEsuperfams barplot
+collapse_lower_than_mean_contrib: "F"
+onlyCoreTEsuperfams: "T"
+
+tree: astralBestTree.nwk.olat-added
+
+
+refSpecieForLog2FC: "Austrolebias_charrua"
+speciesColourFile: "colourFileAustrolebiasPanel.tab" # default or tab separated file
+forceThisYlimit: "15" # default, disable, or a number

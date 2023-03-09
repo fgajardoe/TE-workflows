@@ -210,9 +210,9 @@ names(p.lst)=TEorders
 renderLegendPlot=T
 
 
-alias.sp=c(	"Austrolebias_charrua"="A. charrua",
-		"Cynopoecilus"		
-)
+#alias.sp=c(	"Austrolebias_charrua"="A. charrua",
+#		"Cynopoecilus"		
+#)
 
 
 rm(d)
@@ -237,22 +237,22 @@ for(TEo in TEorders){
 		}
 
 		p.lst[[TEo]]= d.counts %>%
-				filter(TEorder==TEo) %>% 
-				ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+
-				geom_line(size=1.1)+
-				xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+
-				theme_classic()+
-				scale_color_manual(values=pal)+
-				ggtitle(as.character(TEo))+
-				theme(legend.position="none",
-				      title=element_text(size=20),
-				      axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=15),
-				      axis.text.y=element_text(size=15))+
-	   			scale_y_continuous(labels=function(x)x/1000)+
-				ylab("Count (x1000)")+xlab("Kimura distance")+
-			#	geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(bps," bps (",perc,"%)"), colour=Specie), position=position_stack(vjust = 0.5), inherit.aes = T)
-				geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(format(bps/1000000,digit=2)," Mbps (",format(perc,digit=2),"%) "), colour=Specie), 
-			  	  inherit.aes = F, hjust=0,size=7) # solia ser 5
+			filter(TEorder==TEo) %>% 
+			ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+
+			geom_line(size=1.1)+
+			xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+
+			theme_classic()+
+			scale_color_manual(values=pal)+
+			ggtitle(as.character(TEo))+
+			theme(legend.position="none",
+			      title=element_text(size=20),
+			      axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=15),
+			      axis.text.y=element_text(size=15))+
+scale_y_continuous(labels=function(x)x/1000)+
+ylab("Count (x1000)")+xlab("Kimura distance")+
+#	geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(bps," bps (",perc,"%)"), colour=Specie), position=position_stack(vjust = 0.5), inherit.aes = T)
+geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(format(bps/1000000,digit=2)," Mbps (",format(perc,digit=2),"%) "), colour=Specie), 
+	  inherit.aes = F, hjust=0,size=7) # solia ser 5
 
 		if(any(renderLegendPlot)){
 			p.legend=d.counts %>% filter(TEorder==TEo) %>% ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+geom_point()+geom_line()+xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+ theme_classic()+scale_color_manual(values=pal)+ggtitle(as.character(TEo))+ylab("Count")+xlab("Kimura distance")
@@ -284,11 +284,11 @@ for(TEo in TEorders){
 			ylab("Count")+xlab("Kimura distance")+
 			geom_text(data=d.text.TEo,aes(x=x,y=y,label=paste0(format(bps/1000000,digit=2)," Mbps (",format(perc,digit=2),"%) "), colour=Specie), 
 				  #position=position_stack(vjust = 0.5),
-			  	  inherit.aes = F, hjust=0,size=5)
-	if(any(renderLegendPlot)){	
-			p.legend=d.counts %>% filter(TEsuperfam==TEo) %>% ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+geom_point()+geom_line()+xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+ theme_classic()+scale_color_manual(values=pal)+ggtitle(as.character(TEo))+ylab("Count")+xlab("Kimura distance")
-			renderLegendPlot=F
-		}
+				  inherit.aes = F, hjust=0,size=5)
+			if(any(renderLegendPlot)){	
+				p.legend=d.counts %>% filter(TEsuperfam==TEo) %>% ggplot(.,aes(x=kimura_int,y=n,colour=Specie))+geom_point()+geom_line()+xlim(values=c(0,xmax))+ylim(values=c(0,ymax))+ theme_classic()+scale_color_manual(values=pal)+ggtitle(as.character(TEo))+ylab("Count")+xlab("Kimura distance")
+				renderLegendPlot=F
+			}
 	}
 }
 

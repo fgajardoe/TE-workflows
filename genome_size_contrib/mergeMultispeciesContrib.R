@@ -65,7 +65,7 @@ for(tf in tableFiles){
 # cargamos las anotaciones de genes/CDS/exones/etc...
 library(rtracklayer)
 speciesOrder=tableFiles %>% gsub(".RData","",.)
-speciesOrder=speciesOrder[c(1,2,3,4,6,5)]
+#speciesOrder=speciesOrder[c(1,2,3,4,6,5)]
 
 gff.lst=vector(mode="list",length(gffFiles))
 names(gff.lst)=speciesOrder
@@ -293,7 +293,9 @@ for(sp in speciesOrder){
 d$TEorder=factor(d$TEorder,levels=d.order,ordered=T)
 
 # barplot species tree
-p.barplot=d %>% ggplot(aes(x=`Total bps`/1000000000,y=specie, fill=TEorder))+geom_bar(stat="identity",position=position_stack(reverse = TRUE),width=0.5) +theme_classic()+xlab("Gbps")+scale_fill_manual(values=c(d.order.pal))+theme(axis.title.y=element_blank())
+barplots.xlim=max(gz)/1000000000
+barplots.xlim=barplots.xlim %>% round(1)
+p.barplot=d %>% ggplot(aes(x=`Total bps`/1000000000,y=specie, fill=TEorder))+geom_bar(stat="identity",position=position_stack(reverse = TRUE),width=0.5) +theme_classic()+xlab("Gbps")+scale_fill_manual(values=c(d.order.pal))+theme(axis.title.y=element_blank())+xlim(values=c(0,barplots.xlim))
 p.barplot.perc=d %>% ggplot(aes(x=`Total bps`/1000000000,y=specie, fill=TEorder))+geom_bar(stat="identity",position=position_fill(reverse = T),width=0.5) +theme_classic()+xlab("Proportion of genome size")+scale_fill_manual(values=c(d.order.pal))+theme(axis.title.y=element_blank())
 
 
@@ -315,12 +317,13 @@ d.cons.text=d.cons %>% ungroup() %>% dplyr::select(specie,Conservation,`Total bp
 
 # ploting
 p.coreNoCore=d.cons %>% ggplot(aes(x=`Total bps`/1000000000,y=specie, fill=TEorder,group=Conservation))+geom_bar(stat="identity",position="dodge",width=0.5)+
-		xlim(c(0,1))+
+		xlim(c(0,barplots.xlim))+
 	#position_stack(reverse = TRUE),width=0.5)+facet_grid(~ Conservation) +
 		xlab("Gbps")+
 		theme_void()+
+#		scale_fill_manual(values=c("#4d4d4d","#878787"))+
 		scale_fill_manual(values=c(d.cons.order.pal))+
-		geom_text(data=d.cons.text,aes(label=label,x=0.6,group=`Conservation`,colour=`Conservation`),size=3, position=position_dodge(width = .9))+
+		geom_text(data=d.cons.text,aes(label=label,x=0.7*barplots.xlim,group=`Conservation`,colour=`TEorder`),size=3, position=position_dodge(width = .9))+
 		scale_colour_manual(values=c("#4d4d4d","#878787"))+
 		theme(axis.text.y=element_blank(),legend.position="none",axis.title.y=element_blank())
 
@@ -617,52 +620,52 @@ tableTibble=tibble(`title`=NA,`value`=NA,`specie`=NA,`refSpecie`=NA)
 
 print("tibble created. now I'll screen each specie with the reference")
 
-for(refSpecie in speciesOrder){
-	refSpecieGenomeSize=as.numeric(gz[[refSpecie]])
+for(refSpecieForAllvsAll in speciesOrder){
+	refSpecieForAllvsAllGenomeSize=as.numeric(gz[[refSpecieForAllvsAll]])
 	print("genome size obtained for reference")
 
 	# calculating the contribution of each TE order to the differences in the genome size between the reference specie and each other in the panel
 	for(sp in speciesOrder){
-		print(paste0("==> ",sp," and ",refSpecie," (ref)"))
-		if(sp != refSpecie){
+		print(paste0("==> ",sp," and ",refSpecieForAllvsAll," (ref)"))
+		if(sp != refSpecieForAllvsAll){
 
 			spGenomeSize=as.numeric(gz[[sp]])
 			print(paste0("genome size obtained for ",sp))
 
-			deltaGS=abs(refSpecieGenomeSize-spGenomeSize)
+			deltaGS=abs(refSpecieForAllvsAllGenomeSize-spGenomeSize)
 
 			print("delta genome size calculated")
 
 
 
 			totalDeltaTEo=0
-			tableTibble=rbind(tableTibble,c("Delta genome size", deltaGS, sp,refSpecie))
+			tableTibble=rbind(tableTibble,c("Delta genome size", deltaGS, sp,refSpecieForAllvsAll))
 			for(TEo in TEorders){
 
-				nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecie) %>% pull(nBPs) %>% unlist
+				nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecieForAllvsAll) %>% pull(nBPs) %>% unlist
 				nBPsSp=mergedTable.TEorders %>% filter(TEorder==TEo, specie==sp) %>% pull(nBPs) %>% unlist
 				deltaTEo=nBPsRef-nBPsSp
 				percDeltaGSdueTEo=deltaTEo*100/deltaGS
 				totalDeltaTEo=totalDeltaTEo+deltaTEo
 				# report
-				print(paste0("==> For ",refSpecie," vs ",sp," <=="))
+				print(paste0("==> For ",refSpecieForAllvsAll," vs ",sp," <=="))
 				print(paste0("Delta genome size = ",deltaGS," bps"))
 				print(paste0("Delta TE order(",TEo,") = ",deltaTEo))
 				print(paste0("Weight of Delta TE order(",TEo,") on Delta genome size",percDeltaGSdueTEo))
 
 				# table
-				tableTibble=rbind(tableTibble,c(paste0("Delta TE order(",TEo,")"),deltaTEo,sp,refSpecie))
-				tableTibble=rbind(tableTibble,c(paste0("Weight of Delta TE order(",TEo,") on Delta genome size"),percDeltaGSdueTEo,sp,refSpecie))
+				tableTibble=rbind(tableTibble,c(paste0("Delta TE order(",TEo,")"),deltaTEo,sp,refSpecieForAllvsAll))
+				tableTibble=rbind(tableTibble,c(paste0("Weight of Delta TE order(",TEo,") on Delta genome size"),percDeltaGSdueTEo,sp,refSpecieForAllvsAll))
 
 			}
 			print(paste0("Sum of TEorders differences: ",totalDeltaTEo))
 			for(TEo in TEorders){
-				nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecie) %>% pull(nBPs) %>% unlist
+				nBPsRef=mergedTable.TEorders %>% filter(TEorder==TEo, specie==refSpecieForAllvsAll) %>% pull(nBPs) %>% unlist
 				nBPsSp=mergedTable.TEorders %>% filter(TEorder==TEo, specie==sp) %>% pull(nBPs) %>% unlist
 				deltaTEo=nBPsRef-nBPsSp
 				percSumDeltaTEodueTEo=deltaTEo*100/totalDeltaTEo
 				print(paste0("Weight of Delta TE order(",TEo,") on sum of TEorders differences: ",percSumDeltaTEodueTEo,sp))
-				tableTibble=rbind(tableTibble,c(paste0("Weight of Delta TE order(",TEo,") on sum of TEorders differences"),percSumDeltaTEodueTEo,sp,refSpecie))
+				tableTibble=rbind(tableTibble,c(paste0("Weight of Delta TE order(",TEo,") on sum of TEorders differences"),percSumDeltaTEodueTEo,sp,refSpecieForAllvsAll))
 
 
 			}

@@ -16,23 +16,32 @@ logfc.plots=loadRData(logfcPath)
 kimura.plots=loadRData(kimuraPath)
 outprefix=as.character(args[3])
 
-ncols=5
-nrows=2
-unitSize=5
-
 catNames=c(names(logfc.plots),names(kimura.plots)) %>% tibble %>% mutate(v=1)
 colnames(catNames)=c("id","v")
 matchingNames=catNames %>% group_by(id) %>% summarise(t=sum(v)) %>% filter(t==2) %>% pull(id)
 
-
 arrangeOp="h"
 #arrangeOp="v"
 
+#ncols=5
+#if(arrangeOp=="h"){
+	ncols=length(matchingNames)+1
+	nrows=2
+#}
+#if(arrangeOp=="v"){
+#	nrows=length(matchingNames)+1
+#	ncols=2
+#}
+
+unitSize=5
+
 if(arrangeOp=="h"){
-	pdf(paste0(outprefix,".LogFC_kimura_plots.pdf"),width=unitSize*ncols,height=unitSize*nrows)
+	pdf(paste0(outprefix,".LogFC_kimura_plots.pdf"),width=unitSize*ncols,
+	    						height=unitSize*nrows)
 }
 if(arrangeOp=="v"){
-	pdf(paste0(outprefix,".LogFC_kimura_plots.pdf"),height=unitSize*ncols,width=unitSize*nrows)
+	pdf(paste0(outprefix,".LogFC_kimura_plots.pdf"),height=unitSize*ncols,
+	    						width=unitSize*nrows)
 }
 if(arrangeOp != "h" && arrangeOp != "v"){
 	error("the value given to `arrangeOp` is not valid.")
@@ -49,7 +58,7 @@ for(TEo in matchingNames){
 				    axis.text.y=element_text(size=15),
 				    axis.title.x=element_blank())
 	p.k[[TEo]]=p.k[[TEo]]+theme(axis.title.y=element_text(size=18),
-				    #title=element_blank(),
+				    title=element_text(size=20),
 				    #axis.title.y=element_text(size=18),
 				    axis.title.x=element_text(size=18),
 				    axis.text.x=element_text(angle=45,hjust=1,vjust=1,size=15),
@@ -59,6 +68,7 @@ for(TEo in matchingNames){
 	p.par[[TEo]]=grid.arrange(p.l[[TEo]],p.k[[TEo]],ncol=1)
 	}
 	if(arrangeOp=="v"){
+	p.l[[TEo]]=p.l[[TEo]]+theme(axis.text.x=element_blank())
 	p.par[[TEo]]=grid.arrange(p.l[[TEo]],p.k[[TEo]],nrow=1)
 	}
 }
