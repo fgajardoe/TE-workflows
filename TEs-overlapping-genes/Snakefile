@@ -1,0 +1,19 @@
+configfile: "config.yaml"
+CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user"+os.getcwd()+" fgajardoe/r-custom:latest "
+rule all:
+	input:
+		config["prefix"]+".RData"
+	
+
+rule run:
+	input:
+		config["TEannotation"],
+		config["GeneAnnotation"],
+	params:
+		TEsf=config["TEsuperfamilies"],
+		merge=config["mergeOverlappingTEannotations"],
+	output:
+		config["prefix"]+".RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript run.R {input} \"{params.TEsf}\" \"{params.merge}\" "+config["prefix"]
+

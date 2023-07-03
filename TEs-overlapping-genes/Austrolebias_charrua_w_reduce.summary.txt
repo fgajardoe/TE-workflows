@@ -1,0 +1,42 @@
+% of L2 fragments overlapping genes 4.29942287839033 %
+
+		       % of L2 bases overlapping genes 3.63632773728891 %
+
+		       Number of genes overlapping L2 fragments 19476
+
+% of Rex-Babar fragments overlapping genes 4.0386061888852 %
+
+		       % of Rex-Babar bases overlapping genes 3.2156615548227 %
+
+		       Number of genes overlapping Rex-Babar fragments 10467
+
+% of RTE-BovB fragments overlapping genes 4.21733631676233 %
+
+		       % of RTE-BovB bases overlapping genes 3.54570813170588 %
+
+		       Number of genes overlapping RTE-BovB fragments 8258
+
+% of MIR fragments overlapping genes 5.76087060833181 %
+
+		       % of MIR bases overlapping genes 6.02213592248483 %
+
+		       Number of genes overlapping MIR fragments 4803
+
+% of TcMar-Tc1 fragments overlapping genes 5.10642438496208 %
+
+		       % of TcMar-Tc1 bases overlapping genes 4.76634933033047 %
+
+		       Number of genes overlapping TcMar-Tc1 fragments 17819
+
+% of hAT-Ac fragments overlapping genes 5.06490871488931 %
+
+		       % of hAT-Ac bases overlapping genes 4.45802710094445 %
+
+		       Number of genes overlapping hAT-Ac fragments 16922
+
+% of hAT-Charlie fragments overlapping genes 4.90788264632318 %
+
+		       % of hAT-Charlie bases overlapping genes 3.83703297993184 %
+
+		       Number of genes overlapping hAT-Charlie fragments 16274
+

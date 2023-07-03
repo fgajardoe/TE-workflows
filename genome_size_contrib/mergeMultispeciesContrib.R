@@ -205,13 +205,23 @@ d.order=c(d.order,"No-repetitive")
 #d.order=c(d.order,"Other genomic elements")
 #d.order=factor(d.order,levels=d.order, ordered=T)
 d.order.pal=c(
-		   "#ff6f00ff", #coding
-		   "#8a4198ff", #dna core
-		   "#c71000ff", #line
-		   "#008ea0ff", #sine
-		   "#5a9599ff", #ltr
-		   "#d1cfa1ff", #other TEs
-		   "#e2e2e2fb") #other genomic elements
+		Coding="#1a1a1adb", #coding
+		DNA="#8a4198ff", #dna core
+		LINE="#c71000ff", #line
+		SINE="#ff6f00ff", #sine
+		#SINE="#008ea0ff", #sine
+		LTR="#008ea0ff", #ltr
+		#LTR="#5a9599ff", #ltr
+		`Other TEs`="#d1cfa1ff", #other TEs
+		`No-repetitive`="#e2e2e2fb") #other genomic elements
+
+#		   "#ff6f00ff", #coding
+#		   "#8a4198ff", #dna core
+#		   "#c71000ff", #line
+#		   "#008ea0ff", #sine
+#		   "#5a9599ff", #ltr
+#		   "#d1cfa1ff", #other TEs
+#		   "#e2e2e2fb") #other genomic elements
 
 if(!any(plotCDS)){
 	d.order.pal=d.order.pal[c(2:length(d.order.pal))]
@@ -374,8 +384,8 @@ nTEsuperfamsPerTEorder.v=d.tesuperfam.core %>% ungroup %>% select(TEsuperfam,TEo
 pal.TEorders=c(
 		   DNA="#8a4198ff", #dna core
 		   LINE="#c71000ff", #line
-		   SINE="#008ea0ff", #sine
-		   LTR="#5a9599ff", #ltr
+		   SINE="#ff6f00ff", #sine
+		   LTR="#008ea0ff", #ltr
 		   `Other TEs`="#d1cfa1ff") #other
 #names(pal.TEorders)=names(nTEsuperfamsPerTEorder.v)
 

@@ -56,7 +56,9 @@ upset(d.matrix,
       width_ratio=0.1,
       set_sizes=FALSE,
       sort_intersections_by='degree',
-      sort_sets=FALSE)
+      sort_sets=FALSE,
+      keep_empty_groups=TRUE,
+      min_degree=1)
 
 
 

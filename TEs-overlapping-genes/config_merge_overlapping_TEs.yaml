@@ -1,0 +1,5 @@
+TEsuperfamilies: "L2,Rex-Babar,RTE-BovB,MIR,TcMar-Tc1,hAT-Ac,hAT-Charlie"
+prefix: "Austrolebias_charrua_w_reduce"
+mergeOverlappingTEannotations: "TRUE"
+TEannotation: Austrolebias_charrua.rmgr.RData
+GeneAnnotation: Austrolebias_charrua.gene-annotation.gff
