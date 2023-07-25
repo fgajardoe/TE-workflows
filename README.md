@@ -1,12 +1,14 @@
-# TE workflows: Snakemake workflows for analyzing TEs in genomic data
+# Snakemake workflows for analyzing TEs in genomic data
 
 ![logo](docs/logo.png)
 
-This repository contains several workflows used primarly to analyze the different aspects of transposable elements (TEs) biology in the genomes of several species of killifish. However, in principle it should work for any other eukaryote species.
-
 ## Overview
 
-In general terms, the workflow is able to:
+
+This repository contains several workflows used primarly to analyze the different aspects of the biology of transposable elements (TEs) in the genomes of several species of killifish. However, in principle it should work for any other eukaryote species.
+
+
+In general terms, the pipeline is able to:
 
 + Quantify the abundance of TEs in genomes at different levels of classification (TE orders and superfamilies).
 + Generate distributions of Kimura distances.
@@ -24,10 +26,10 @@ The complete workflow is divided into modules whose input and output files are s
 
 ## Requirements
 
-(Note that this section is still under development)
 The requirements will vary according to the module used, however there are a few mandatory requeriments:
 
 _Mandatory_
++ Snakemake
 + Docker
 + [This container](https://hub.docker.com/r/fgajardoe/r-custom)
 + Bedtools
@@ -38,6 +40,10 @@ _For Tandem analysis_
 _For phylogenetic analysis_
 + RAxML
 
+
+## Disclaimer
+
+The pipeline and its documentation are under continous development, so please don't herisate in reporting any bug or problem that you could have. 
 
 # References
 
