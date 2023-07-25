@@ -1,6 +1,6 @@
 # TE workflows: Snakemake workflows for analyzing TEs in genomic data
 
-![logo](https://imgur.com/lqsBs5K)
+![logo](docs/logo.png)
 
 This repository contains several workflows used primarly to analyze the different aspects of transposable elements (TEs) biology in the genomes of several species of killifish. However, in principle it should work for any other eukaryote species.
 
@@ -17,7 +17,7 @@ In general terms, the workflow is able to:
 
 The complete workflow is divided into modules whose input and output files are summarized in the following flow diagram:
 
-![Flow-diagram](https://imgur.com/hrrdrs3)
+![Flow-diagram](docs/diagram.png)
 
 # References
 
