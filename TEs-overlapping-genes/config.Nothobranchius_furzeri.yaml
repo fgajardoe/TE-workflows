@@ -1,0 +1,11 @@
+TEsuperfamilies: "L2,Rex-Babar,RTE-BovB,TcMar-Tc1,hAT-Ac,hAT-Charlie"
+prefix: "Nothobranchius_furzeri"
+assembly: Nothobranchius_furzeri.genome.fasta
+TEannotation: Nothobranchius_furzeri.rmgr.RData
+GeneAnnotation: Nothobranchius_furzeri.gene-annotation.gff
+colourPalette: colourFileTEs.tab
+textTagParameter: "ncbi"
+
+minFragmentSizeToCheckForTandems: 1000
+quantilePercGeneLength: 0.0
+quantileTandemCopyNumber: 0.99

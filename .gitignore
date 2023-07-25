@@ -15,3 +15,9 @@ tmp*
 *.faa
 *.fa
 *.nwk
+*.BED
+*.tsv
+*.txt
+*.fai
+*.out
+*.done

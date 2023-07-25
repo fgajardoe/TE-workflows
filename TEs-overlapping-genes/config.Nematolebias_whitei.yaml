@@ -1,0 +1,11 @@
+TEsuperfamilies: "L2,Rex-Babar,RTE-BovB,TcMar-Tc1,hAT-Ac,hAT-Charlie"
+prefix: "Nematolebias_whitei"
+assembly: Nematolebias_whitei.genome.fasta
+TEannotation: Nematolebias_whitei.rmgr.RData
+GeneAnnotation: Nematolebias_whitei.gene-annotation.gff
+colourPalette: colourFileTEs.tab
+textTagParameter: "ncbi"
+
+minFragmentSizeToCheckForTandems: 1000
+quantilePercGeneLength: 0.0
+quantileTandemCopyNumber: 0.99

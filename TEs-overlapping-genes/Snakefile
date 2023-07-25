@@ -1,19 +1,113 @@
-configfile: "config.yaml"
 CONTAINER_R_CMD="docker run -v /:/home/user -w /home/user"+os.getcwd()+" fgajardoe/r-custom:latest "
 rule all:
 	input:
-		config["prefix"]+".RData"
+		config["prefix"]+".merged.RData"
 	
 
-rule run:
+rule run_w_reduce:
+	input:
+		config["TEannotation"],
+		config["GeneAnnotation"],
+		config["colourPalette"]
+	params:
+		TEsf=config["TEsuperfamilies"],
+		merge="T",
+		textTag=config["textTagParameter"]
+	output:
+		config["prefix"]+".w_reduce.RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript run.R {input} \"{params.TEsf}\" \"{params.merge}\" \"{params.textTag}\" "+config["prefix"]+".w_reduce"
+
+rule cat_w_reduce:
+	input:
+		config["prefix"]+".w_reduce.RData"
+	output:
+		config["prefix"]+".cat_w_reduce.tsv"
+	shell:
+		"cat "+config["prefix"]+".w_reduce.*.tsv | grep -vPe \"^ID\t\" > {output}"
+		
+
+rule run_wo_reduce:
+	input:
+		config["TEannotation"],
+		config["GeneAnnotation"],
+		config["colourPalette"]
+	params:
+		TEsf=config["TEsuperfamilies"],
+		merge="F",
+		textTag=config["textTagParameter"]
+	output:
+		config["prefix"]+".wo_reduce.RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript run.R {input} \"{params.TEsf}\" \"{params.merge}\" \"{params.textTag}\" "+config["prefix"]+".wo_reduce"
+
+rule cat_wo_reduce:
+	input:
+		config["prefix"]+".wo_reduce.RData"
+	output:
+		config["prefix"]+".cat_wo_reduce.tsv"
+	shell:
+		"cat "+config["prefix"]+".wo_reduce.*.tsv | grep -vPe \"^ID\t\" > {output}"
+
+rule merge_table:
+	input:
+		config["prefix"]+".cat_w_reduce.tsv",
+		config["prefix"]+".cat_wo_reduce.tsv",
+		config["prefix"]+".TRF.tab"
+	params:
+		config["TEsuperfamilies"],
+		config["quantilePercGeneLength"],
+		config["quantileTandemCopyNumber"]
+	output:
+		config["prefix"]+".merged.RData",
+	shell:
+		CONTAINER_R_CMD+" Rscript merge.R {input} {params} "+config["prefix"]
+		
+
+rule inspectTandems_w_reduce:
 	input:
 		config["TEannotation"],
 		config["GeneAnnotation"],
 	params:
+		rSize=config["minFragmentSizeToCheckForTandems"],
 		TEsf=config["TEsuperfamilies"],
-		merge=config["mergeOverlappingTEannotations"],
+		merge="T",
 	output:
-		config["prefix"]+".RData"
-	shell:
-		CONTAINER_R_CMD+" Rscript run.R {input} \"{params.TEsf}\" \"{params.merge}\" "+config["prefix"]
+		touch(config["prefix"]+".inspectTandems.done")
 
+	shell:
+		CONTAINER_R_CMD+" Rscript getBEDforTEsOverlappingGenes.R {input} {params.rSize} \"{params.TEsf}\" \"{params.merge}\" "+config["prefix"]
+
+rule catBEDs:
+	input:
+		config["prefix"]+".inspectTandems.done"
+	output:
+		config["prefix"]+".allTEsf.BED"
+	shell:
+		"cat "+config["prefix"]+".*.bed > "+config["prefix"]+".allTEsf.BED"
+
+rule getReducedTEseqs:
+	input:
+		asm=config["assembly"],
+		bed=config["prefix"]+".allTEsf.BED"
+	output:
+		config["prefix"]+".allTEsf.fasta"
+	shell:
+		"bedtools getfasta -fi {input.asm} -fo {output} -bed {input.bed} -nameOnly"
+
+rule runTRF:
+	input:
+		config["prefix"]+".allTEsf.fasta"
+	output:
+		config["prefix"]+".TRF.out"
+	shell:
+		"trf {input} 2 5 7 80 10 50 2000 -l 10 -h -ngs > "+config["prefix"]+".TRF.out"
+
+rule generateTableForMerging:
+	input:
+		config["prefix"]+".TRF.out"
+	output:
+		config["prefix"]+".TRF.tab"
+	shell:
+		"less {input} |awk '{{if(/^@/){{def=$0}}else{{print def\" \"$0}}}}' |perl -pe's/_/ /' |cut -c2- |awk '{{print $1\" \"$0}}' |perl -pe's/\|\d+\s/ /' > {output}"
+		#"less {input} |grep -Pe'^@' |rev|perl -pe's/_/\\t/' |rev|perl -pe's/\|/\\t/'|cut -c2-|awk '{{print $1\"|\"$2\"\\t\"$1\"\\t\"$3}}' > {output}"

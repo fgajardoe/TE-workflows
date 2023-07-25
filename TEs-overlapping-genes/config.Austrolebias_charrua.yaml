@@ -1,0 +1,11 @@
+TEsuperfamilies: "L2,Rex-Babar,RTE-BovB,TcMar-Tc1,hAT-Ac,hAT-Charlie"
+prefix: "Austrolebias_charrua"
+assembly: Austrolebias_charrua.genome.fasta
+TEannotation: Austrolebias_charrua.rmgr.RData
+GeneAnnotation: Austrolebias_charrua.gene-annotation.gff
+colourPalette: colourFileTEs.tab
+textTagParameter: "custom"
+
+minFragmentSizeToCheckForTandems: 1000
+quantilePercGeneLength: 0.0
+quantileTandemCopyNumber: 0.99
