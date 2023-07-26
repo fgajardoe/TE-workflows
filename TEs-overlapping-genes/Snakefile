@@ -60,6 +60,7 @@ rule merge_table:
 		config["quantileTandemCopyNumber"]
 	output:
 		config["prefix"]+".merged.RData",
+		config["prefix"]+".reduced_trf_merged.tsv"
 	shell:
 		CONTAINER_R_CMD+" Rscript merge.R {input} {params} "+config["prefix"]
 		
@@ -111,3 +112,16 @@ rule generateTableForMerging:
 	shell:
 		"less {input} |awk '{{if(/^@/){{def=$0}}else{{print def\" \"$0}}}}' |perl -pe's/_/ /' |cut -c2- |awk '{{print $1\" \"$0}}' |perl -pe's/\|\d+\s/ /' > {output}"
 		#"less {input} |grep -Pe'^@' |rev|perl -pe's/_/\\t/' |rev|perl -pe's/\|/\\t/'|cut -c2-|awk '{{print $1\"|\"$2\"\\t\"$1\"\\t\"$3}}' > {output}"
+
+
+rule geneEnrichment:
+	input:
+		config["prefix"]+".reduced_trf_merged.tsv",
+		config["pantherForSpecie"]
+	params:
+		config["pantherGOeq"],
+		config["enrichment_pvalCutoff"]
+	output:
+		config["prefix"]+".enrichment.RData"
+	shell:
+		CONTAINER_R_CMD+" Rscript enrichment.R {input} {params} "+config["prefix"]

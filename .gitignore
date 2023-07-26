@@ -21,3 +21,4 @@ tmp*
 *.fai
 *.out
 *.done
+*.PANTHER
