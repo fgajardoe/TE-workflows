@@ -1,4 +1,3 @@
-# Snakemake workflows for analyzing TEs in genomic data
 
 ![logo](docs/logo.png)
 
@@ -43,7 +42,7 @@ _For phylogenetic analysis_
 
 ## Disclaimer
 
-The pipeline and its documentation are under continous development, so please don't herisate in reporting any bug or problem that you could have. 
+The pipeline and its documentation are under continous development, so please don't hesitate in reporting any bug or problem that you could have. 
 
 # References
 
