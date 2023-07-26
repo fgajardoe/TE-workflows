@@ -4,8 +4,7 @@
 ## Overview
 
 
-This repository contains several workflows used primarly to analyze the different aspects of the biology of transposable elements (TEs) in the genomes of several species of killifish. However, in principle it should work for any other eukaryote species.
-
+This repository contains several snakemake workflows used primarly to analyze the different aspects of the biology of transposable elements (TEs) in the genomes of killifish. In principle, it should work with any other eukaryote genome as well.
 
 In general terms, the pipeline is able to:
 
@@ -15,7 +14,7 @@ In general terms, the pipeline is able to:
 + Infer phylogenetic relationships between representative sequences of TE superfamilies.
 + To perfom analysis of shared and unique TE superfamilies between species.
 + To characterize TE superfamilies insertions regarding to gene regions (exons, introns, upstream, and downstream)
-+ To identify genes with tandem repeats of specific TE superfamilies.
++ To identify genes with tandem repeats of specific TE superfamilies and perfom functional enrichments of these genes.
 
 ## Modules
 
